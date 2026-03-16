@@ -1,15 +1,25 @@
-package org.wy.demo.controller; // 注意：包名可能是 org.wy.demo.controller，请根据实际情况调整
+package org.wy.demo.controller;
 
-import org.springframework.stereotype.Controller;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.wy.demo.entity.LoginResponse;
 import org.wy.demo.entity.User;
 import org.wy.demo.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
-@Controller
+import java.util.Map;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/user")
 @CrossOrigin
@@ -22,6 +32,13 @@ public class UserController {
         return userService.getAllUsers();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable Integer id) {
+        return userService.getUserById(id)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("用户不存在"));
+    }
+
     @PostMapping("/register")
     public String register(@RequestBody User user) {
         return userService.register(user);
@@ -29,24 +46,52 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User loginUser) {
-        // 调用修改后的 service 方法，返回 User 对象或 null
         User user = userService.login(loginUser.getUsername(), loginUser.getPassword());
 
         if (user != null) {
-            // 生成一个简单的 token（后续可替换为 JWT）
             String token = "token-" + user.getId();
-
-            // 构建响应对象
             LoginResponse response = new LoginResponse(
                     user.getId(),
                     user.getUsername(),
-                    user.getRole(),   // 确保 User 实体有 role 字段
-                    token
+                    user.getRole(),
+                    token,
+                    user.getAvatarUrl()
             );
-            return ResponseEntity.ok(response); // 200 OK
+            return ResponseEntity.ok(response);
         } else {
-            // 登录失败返回 401 状态码和错误信息
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("用户名或密码错误");
+        }
+    }
+
+    @PostMapping(value = "/{id}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> uploadAvatar(@PathVariable Integer id,
+                                          @RequestPart("avatar") MultipartFile file) {
+        User user = userService.getUserById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("用户不存在");
+        }
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("头像文件不能为空");
+        }
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body("仅支持图片文件");
+        }
+
+        try {
+            Path uploadDir = Paths.get("src/main/resources/static/uploads/avatars");
+            Files.createDirectories(uploadDir);
+
+            String ext = StringUtils.getFilenameExtension(file.getOriginalFilename());
+            String filename = "avatar-" + id + "-" + UUID.randomUUID() + (ext != null ? "." + ext : "");
+            Path target = uploadDir.resolve(filename);
+            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+
+            String avatarUrl = "/uploads/avatars/" + filename;
+            userService.updateAvatar(id, avatarUrl);
+            return ResponseEntity.ok(Map.of("avatarUrl", avatarUrl));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("头像上传失败");
         }
     }
 }

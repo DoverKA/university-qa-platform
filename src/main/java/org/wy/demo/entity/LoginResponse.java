@@ -1,20 +1,20 @@
 package org.wy.demo.entity;
 
 public class LoginResponse {
-    private Integer id;           // 改为 Integer
+    private Integer id;
     private String username;
     private String role;
     private String token;
+    private String avatarUrl;
 
-    // 构造方法参数也改为 Integer
-    public LoginResponse(Integer id, String username, String role, String token) {
+    public LoginResponse(Integer id, String username, String role, String token, String avatarUrl) {
         this.id = id;
         this.username = username;
         this.role = role;
         this.token = token;
+        this.avatarUrl = avatarUrl;
     }
 
-    // getter 和 setter
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -26,4 +26,7 @@ public class LoginResponse {
 
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
+
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
 }

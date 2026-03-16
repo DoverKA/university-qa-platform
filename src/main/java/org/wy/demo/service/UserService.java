@@ -66,6 +66,16 @@ public class UserService implements UserDetailsService {
         return "Registration successful";
     }
 
+
+    public User updateAvatar(Integer userId, String avatarUrl) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return null;
+        }
+        user.setAvatarUrl(avatarUrl);
+        return userRepository.save(user);
+    }
+
     public User login(String username, String password) {
         Optional<User> userOpt = userRepository.findByUsername(username);
         if (userOpt.isEmpty()) return null;

@@ -10,6 +10,7 @@ public interface AnswerRepository extends JpaRepository<Answer, Integer> {
 
     // 根据回答者查询回答
     List<Answer> findByAuthor(User author);
+    List<Answer> findByAuthorId(Integer authorId);
 
     // 查询问题的最佳答案
     Answer findByQuestionAndIsAccepted(Question question, Boolean isAccepted);

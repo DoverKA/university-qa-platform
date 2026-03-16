@@ -29,6 +29,10 @@ public class AnswerService {
         return answerRepository.findByQuestion(question);
     }
 
+    public List<Answer> getAnswersByAuthorId(Integer authorId) {
+        return answerRepository.findByAuthorId(authorId);
+    }
+
     // 采纳最佳答案（同时标记问题为已解决）
     public Answer acceptAnswer(Integer answerId) {
         Answer answer = getAnswerById(answerId);
