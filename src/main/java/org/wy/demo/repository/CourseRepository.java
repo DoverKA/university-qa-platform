@@ -16,4 +16,7 @@ public interface CourseRepository  extends JpaRepository<Course, Integer> {
 
     // 新增：按教师ID查询（比传整个User对象更实用）
     List<Course> findByTeacherId(Integer teacherId);
+
+    // 新增：用于同步时避免重复创建课程
+    boolean existsByNameAndMajorAndSemesterAndTeacherId(String name, String major, String semester, Integer teacherId);
 }
