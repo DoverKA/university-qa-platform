@@ -21,6 +21,11 @@ public class CourseController {
         return courseService.getAllCourses();
     }
 
+    @GetMapping("/teacher/{teacherId}")
+    public List<Course> getCoursesByTeacherId(@PathVariable Integer teacherId) {
+        return courseService.getCoursesByTeacherId(teacherId);
+    }
+
     @PostMapping
     public String createCourse(@RequestBody Course course) {
         return courseService.saveCourse(course);

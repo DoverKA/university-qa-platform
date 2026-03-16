@@ -30,6 +30,11 @@ public class AnswerController {
         List<Answer> answers = answerService.getAnswersByQuestion(question);
         return ResponseEntity.ok(answers);
     }
+    @GetMapping("/author/{authorId}")
+    public ResponseEntity<List<Answer>> getAnswersByAuthor(@PathVariable Integer authorId) {
+        return ResponseEntity.ok(answerService.getAnswersByAuthorId(authorId));
+    }
+    
     // 采纳最佳答案
     @PutMapping("/{id}/accept")
     public ResponseEntity<Answer> acceptAnswer(@PathVariable Integer id) {

@@ -20,7 +20,8 @@ public class User {
     private String password;
     private String email;
     private String role;
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 }
-

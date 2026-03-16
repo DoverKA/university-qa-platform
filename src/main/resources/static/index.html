@@ -252,6 +252,12 @@
 
   .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--cream); color: var(--muted); margin-right: 4px; }
+
+  .avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border:1px solid var(--border); background: var(--cream); }
+  .avatar-lg { width: 72px; height: 72px; }
+  .profile-head { display:flex; align-items:center; gap:14px; }
+  .profile-card { max-width: 560px; }
+
 </style>
 </head>
 <body>
@@ -314,6 +320,7 @@
     <div class="topbar-logo">Uni<span>Ask</span></div>
     <div class="topbar-right">
       <div class="user-badge">
+        <img id="topbar-avatar" class="avatar" src="" alt="avatar">
         <span id="topbar-username"></span>
         <span id="topbar-role" class="role-pill"></span>
       </div>
@@ -337,6 +344,9 @@
         </button>
         <button class="nav-item" onclick="showPage('my-questions')">
           <span class="nav-icon">📝</span> 我的问题
+        </button>
+        <button class="nav-item" onclick="showPage('profile')">
+          <span class="nav-icon">👤</span> 个人中心
         </button>
       </div>
     </aside>
@@ -425,6 +435,45 @@
           </div>
         </div>
         <div id="my-questions-list"></div>
+      </div>
+
+
+      <!-- Profile -->
+      <div id="page-profile" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title" id="profile-title">个人中心</div>
+            <div class="page-desc">管理头像，查看自己的课程和回答记录。</div>
+          </div>
+        </div>
+        <div class="card profile-card">
+          <div class="profile-head">
+            <img id="profile-avatar" class="avatar avatar-lg" src="" alt="avatar">
+            <div>
+              <div class="card-title" id="profile-username"></div>
+              <div class="card-meta"><span id="profile-role"></span></div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:16px">
+            <label>上传头像</label>
+            <input type="file" id="avatar-file" accept="image/*">
+          </div>
+          <button class="btn btn-teal btn-sm" onclick="uploadAvatar()">上传头像</button>
+          <div id="avatar-msg" class="msg"></div>
+        </div>
+
+        <div class="stats-grid" id="teacher-pie-wrapper" style="display:none">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-title" style="margin-bottom:12px">教师问题分布</div>
+            <canvas id="teacher-pie" width="320" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="page-title" style="font-size:1.1rem; margin:16px 0;">我的课程</div>
+        <div id="profile-courses-list"></div>
+
+        <div class="page-title" style="font-size:1.1rem; margin:22px 0 16px;">我回答的问题</div>
+        <div id="profile-answers-list"></div>
       </div>
 
       <!-- Question Detail (dynamic page) -->
@@ -586,11 +635,15 @@ function launchApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('topbar-username').textContent = currentUser.username;
+  updateAvatarViews();
   const rolePill = document.getElementById('topbar-role');
   rolePill.textContent = currentUser.role;
   rolePill.className = `role-pill role-${currentUser.role}`;
 
   // Show role-specific UI
+  document.getElementById('create-course-btn').style.display = 'none';
+  document.getElementById('ask-question-btn').style.display = 'none';
+  document.getElementById('ask-question-btn2').style.display = 'none';
   if (currentUser.role === 'teacher') {
     document.getElementById('create-course-btn').style.display = '';
   }
@@ -638,6 +691,7 @@ function showPage(name) {
     if (n.textContent.trim().toLowerCase().includes(name.replace('-',' '))) n.classList.add('active');
   });
   if (name === 'my-questions') loadMyQuestions();
+  if (name === 'profile') loadProfile();
 }
 
 // ── DASHBOARD ────────────────────────────────────────────
@@ -885,6 +939,110 @@ async function submitAnswer() {
   } else {
     showMsg(msg, '发布回答失败', 'error');
   }
+}
+
+
+async function uploadAvatar() {
+  const fileInput = document.getElementById('avatar-file');
+  const msg = document.getElementById('avatar-msg');
+  if (!fileInput.files.length) { showMsg(msg, '请选择图片文件', 'error'); return; }
+  const formData = new FormData();
+  formData.append('avatar', fileInput.files[0]);
+  try {
+    const res = await fetch(`${API}/user/${currentUser.id}/avatar`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      body: formData
+    });
+    const raw = await res.text();
+    let data = {};
+    try { data = JSON.parse(raw); } catch { data = { message: raw }; }
+    if (!res.ok) { showMsg(msg, data.message || raw || '上传失败', 'error'); return; }
+    currentUser.avatarUrl = data.avatarUrl;
+    localStorage.setItem('uniask_user', JSON.stringify(currentUser));
+    updateAvatarViews();
+    fileInput.value = '';
+    showMsg(msg, '头像上传成功', 'success');
+  } catch (e) {
+    showMsg(msg, '头像上传失败', 'error');
+  }
+}
+
+function updateAvatarViews() {
+  const defaultAvatar = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="100%" height="100%" fill="%23ede8dc"/><text x="50%" y="54%" font-size="30" text-anchor="middle">👤</text></svg>';
+  const src = currentUser?.avatarUrl ? currentUser.avatarUrl : defaultAvatar;
+  const top = document.getElementById('topbar-avatar');
+  const profile = document.getElementById('profile-avatar');
+  if (top) top.src = src;
+  if (profile) profile.src = src;
+}
+
+async function loadProfile() {
+  document.getElementById('profile-title').textContent = currentUser.role === 'teacher' ? '教师个人中心' : '学生个人中心';
+  document.getElementById('profile-username').textContent = currentUser.username;
+  document.getElementById('profile-role').textContent = currentUser.role === 'teacher' ? '教师' : '学生';
+  updateAvatarViews();
+
+  const [courses, answers, questions] = await Promise.all([
+    currentUser.role === 'teacher' ? api('GET', `/courses/teacher/${currentUser.id}`) : api('GET', '/courses'),
+    api('GET', `/answers/author/${currentUser.id}`),
+    api('GET', '/questions')
+  ]);
+
+  let myCourses = courses || [];
+  if (currentUser.role === 'student') {
+    const relatedCourseIds = new Set((questions || []).filter(q => q.student?.id === currentUser.id).map(q => q.course?.id));
+    (answers || []).forEach(a => relatedCourseIds.add(a.question?.course?.id));
+    myCourses = (courses || []).filter(c => relatedCourseIds.has(c.id));
+  }
+
+  document.getElementById('profile-courses-list').innerHTML = myCourses.length ? myCourses.map(c => `
+    <div class="card">
+      <div class="card-title">${esc(c.name)}</div>
+      <div class="card-meta"><span>📖 ${esc(c.major)}</span><span>🗓 ${esc(c.semester)}</span></div>
+    </div>
+  `).join('') : emptyState('暂无课程记录');
+
+  const answeredQuestions = Array.from(new Map((answers || []).map(a => [a.question?.id, a.question])).values()).filter(Boolean);
+  document.getElementById('profile-answers-list').innerHTML = answeredQuestions.length ? answeredQuestions.map(renderQuestionCard).join('') : emptyState('暂无回答记录');
+
+  const pieWrap = document.getElementById('teacher-pie-wrapper');
+  if (currentUser.role === 'teacher') {
+    pieWrap.style.display = 'grid';
+    drawTeacherPie(questions || []);
+  } else {
+    pieWrap.style.display = 'none';
+  }
+}
+
+function drawTeacherPie(allQuestionsData) {
+  const myQuestionList = allQuestionsData.filter(q => q.course?.teacher?.id === currentUser.id);
+  const solved = myQuestionList.filter(q => q.isSolved).length;
+  const unsolved = myQuestionList.length - solved;
+  const canvas = document.getElementById('teacher-pie');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const total = Math.max(solved + unsolved, 1);
+  let start = -Math.PI/2;
+  const slices = [
+    { value: solved, color: '#1a6b6b', label: `已解决 ${solved}` },
+    { value: unsolved, color: '#c0392b', label: `未解决 ${unsolved}` }
+  ];
+  slices.forEach((s, i) => {
+    const angle = (s.value / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(110, 110);
+    ctx.arc(110, 110, 80, start, start + angle);
+    ctx.closePath();
+    ctx.fillStyle = s.color;
+    ctx.fill();
+    start += angle;
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(220, 70 + i*28, 12, 12);
+    ctx.fillStyle = '#333';
+    ctx.font = '13px DM Sans';
+    ctx.fillText(s.label, 238, 80 + i*28);
+  });
 }
 
 // ── UTILS ────────────────────────────────────────────────
