@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>智能问答</title>
+    <!-- 引入Element UI（简化样式） -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/element-plus/dist/index.full.js"></script>
+</head>
+<body>
+<div id="app" style="width: 800px; margin: 50px auto;">
+    <el-card title="提问并获取AI回答">
+        <!-- 问题输入 -->
+        <el-input
+                v-model="question"
+                type="textarea"
+                :rows="5"
+                placeholder="请输入你的问题（比如：Spring Boot怎么用JPA？）"
+                style="margin-bottom: 20px;"
+        ></el-input>
+        <!-- 提交按钮 -->
+        <el-button type="primary" @click="submitQuestion">提交问题</el-button>
+
+        <!-- AI回答展示 -->
+        <div style="margin-top: 30px;">
+            <h3>AI回答：</h3>
+            <el-card v-if="answer">{{ answer }}</el-card>
+            <el-alert v-if="error" type="error" :title="error" show-icon></el-alert>
+        </div>
+    </el-card>
+</div>
+
+<script>
+    const { createApp } = Vue;
+    createApp({
+        setup() {
+            const question = Vue.ref('');
+            const answer = Vue.ref('');
+            const error = Vue.ref('');
+
+            // 提交问题调用AI
+            const submitQuestion = async () => {
+                if (!question.value) {
+                    error.value = '请输入问题！';
+                    return;
+                }
+                try {
+                    // 调用后端AI接口
+                    const res = await axios.post('http://localhost:8080/question/ai-ask', question.value);
+                    answer.value = res.data;
+                    error.value = '';
+                } catch (e) {
+                    error.value = '调用失败：' + e.message;
+                    answer.value = '';
+                }
+            };
+
+            return { question, answer, error, submitQuestion };
+        }
+    }).use(ElementPlus).mount('#app');
+</script>
+</body>
+</html>

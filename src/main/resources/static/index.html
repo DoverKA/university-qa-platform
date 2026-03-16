@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniAsk — 大学问答平台</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a2e;
+    --paper: #f5f0e8;
+    --cream: #ede8dc;
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --rust: #c0392b;
+    --teal: #1a6b6b;
+    --teal-light: #d4eae9;
+    --muted: #7a7568;
+    --border: #d5cfc3;
+    --white: #ffffff;
+    --shadow: 0 2px 20px rgba(26,26,46,0.08);
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+    background: var(--ink);
+    position: relative; overflow: hidden;
+  }
+  #auth-screen::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 30%, rgba(201,168,76,0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(26,107,107,0.15) 0%, transparent 50%);
+  }
+  .auth-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 48px 44px;
+    width: 420px;
+    position: relative; z-index: 1;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+  }
+  .auth-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .auth-logo span { color: var(--gold); }
+  .auth-subtitle { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
+  .auth-tabs { display: flex; gap: 0; margin-bottom: 28px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .auth-tab {
+    flex: 1; padding: 10px; text-align: center; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: var(--muted);
+    transition: all 0.2s; background: transparent; border: none;
+  }
+  .auth-tab.active { background: var(--ink); color: var(--white); }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
+  input, select {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 14px; color: var(--ink);
+    background: var(--paper); outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--teal); background: var(--white); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px 22px; border-radius: 8px; font-family: inherit;
+    font-size: 14px; font-weight: 500; cursor: pointer; border: none;
+    transition: all 0.18s; text-decoration: none;
+  }
+  .btn-primary { background: var(--ink); color: var(--white); width: 100%; }
+  .btn-primary:hover { background: #2d2d4a; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,26,46,0.25); }
+  .btn-gold { background: var(--gold); color: var(--white); }
+  .btn-gold:hover { background: var(--gold-light); color: var(--ink); }
+  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--ink); }
+  .btn-outline:hover { border-color: var(--ink); }
+  .btn-teal { background: var(--teal); color: var(--white); }
+  .btn-teal:hover { background: #135555; }
+  .btn-danger { background: var(--rust); color: var(--white); }
+  .btn-sm { padding: 7px 14px; font-size: 13px; }
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 12px; display: none; }
+  .msg.error { background: #fdecea; color: var(--rust); display: block; }
+  .msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+  .topbar {
+    background: var(--ink); color: var(--white);
+    padding: 0 32px; height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; }
+  .topbar-logo span { color: var(--gold); }
+  .topbar-right { display: flex; align-items: center; gap: 16px; }
+  .user-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px;
+  }
+  .role-pill {
+    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .role-student { background: var(--teal-light); color: var(--teal); }
+  .role-teacher { background: #fef3cd; color: #856404; }
+  .role-admin { background: #f8d7da; color: #721c24; }
+
+  .layout { display: flex; min-height: calc(100vh - 60px); }
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: var(--white); border-right: 1px solid var(--border);
+    padding: 24px 0;
+    position: sticky; top: 60px; height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+  .sidebar-section { padding: 0 16px; margin-bottom: 24px; }
+  .sidebar-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; border-radius: 8px;
+    cursor: pointer; font-size: 14px; color: var(--ink);
+    transition: all 0.15s; border: none; background: none; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: var(--cream); }
+  .nav-item.active { background: var(--teal-light); color: var(--teal); font-weight: 500; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .main { flex: 1; padding: 32px; overflow-y: auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; }
+  .page-desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px;
+    box-shadow: var(--shadow); margin-bottom: 16px;
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 28px rgba(26,26,46,0.12); }
+  .card-click { cursor: pointer; }
+  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .card-title { font-size: 16px; font-weight: 500; color: var(--ink); }
+  .card-meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .card-body { font-size: 14px; color: #444; line-height: 1.6; }
+  .badge {
+    display: inline-flex; align-items: center; padding: 3px 10px;
+    border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .badge-solved { background: #e8f5e9; color: #2e7d32; }
+  .badge-unsolved { background: #fff3cd; color: #856404; }
+  .badge-accepted { background: var(--teal-light); color: var(--teal); }
+  .badge-course { background: var(--cream); color: var(--ink); }
+
+  /* ── AI ANSWER BOX ── */
+  .ai-box {
+    background: linear-gradient(135deg, #f0f7f7 0%, #e8f4f4 100%);
+    border: 1px solid #b2d8d8; border-radius: 10px;
+    padding: 16px 18px; margin-top: 16px;
+  }
+  .ai-box-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ai-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--teal);
+  }
+  .ai-icon { font-size: 16px; }
+  .ai-content { font-size: 13.5px; color: #2c4c4c; line-height: 1.7; white-space: pre-wrap; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(26,26,46,0.55); backdrop-filter: blur(4px);
+    z-index: 1000; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 14px;
+    padding: 36px; width: 540px; max-width: 95vw;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: modalIn 0.2s ease;
+  }
+  @keyframes modalIn { from { opacity:0; transform: translateY(16px) scale(0.97); } to { opacity:1; transform: none; } }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 24px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+  textarea {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-family: inherit; font-size: 14px; color: var(--ink);
+    background: var(--paper); outline: none; resize: vertical; min-height: 100px;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--teal); background: var(--white); }
+
+  /* ── STATS ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ink); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    display: flex; gap: 10px; margin-bottom: 20px;
+  }
+  .search-bar input { flex: 1; }
+
+  /* ── ANSWERS ── */
+  .answer-card {
+    background: var(--cream); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; margin-bottom: 12px;
+    position: relative;
+  }
+  .answer-card.accepted { border-color: var(--teal); background: var(--teal-light); }
+  .answer-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; }
+
+  /* ── LOADER ── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
+    border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--cream); color: var(--muted); margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ AUTH SCREEN ═══════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Uni<span>Ask</span></div>
+    <div class="auth-subtitle">大学问答平台</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">登录</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">注册</button>
+    </div>
+
+    <!-- Login Form -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>用户名</label>
+        <input type="text" id="login-username" placeholder="请输入用户名">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="login-password" placeholder="请输入密码">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">登录</button>
+      <div id="login-msg" class="msg"></div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" style="display:none">
+      <div class="form-group">
+        <label>用户名</label>
+        <input type="text" id="reg-username" placeholder="选择用户名">
+      </div>
+      <div class="form-group">
+        <label>邮箱</label>
+        <input type="email" id="reg-email" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="reg-password" placeholder="至少6位字符">
+      </div>
+      <div class="form-group">
+        <label>我是</label>
+        <select id="reg-role">
+          <option value="student">学生</option>
+          <option value="teacher">教师</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="doRegister()">创建账户</button>
+      <div id="reg-msg" class="msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MAIN APP ═══════════════════════════════ -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">Uni<span>Ask</span></div>
+    <div class="topbar-right">
+      <div class="user-badge">
+        <span id="topbar-username"></span>
+        <span id="topbar-role" class="role-pill"></span>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="logout()" style="color:white;border-color:rgba(255,255,255,0.3)">退出登录</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">菜单</div>
+        <button class="nav-item active" onclick="showPage('dashboard')">
+          <span class="nav-icon">📊</span> 仪表盘
+        </button>
+        <button class="nav-item" onclick="showPage('courses')">
+          <span class="nav-icon">📚</span> 课程
+        </button>
+        <button class="nav-item" onclick="showPage('questions')">
+          <span class="nav-icon">❓</span> 问题
+        </button>
+        <button class="nav-item" onclick="showPage('my-questions')">
+          <span class="nav-icon">📝</span> 我的问题
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page active">
+        <div class="page-header">
+          <div>
+            <div class="page-title">仪表盘</div>
+            <div class="page-desc">欢迎回来！这里是平台概览。</div>
+          </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-courses">—</div>
+            <div class="stat-label">课程总数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-questions">—</div>
+            <div class="stat-label">问题总数</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-solved">—</div>
+            <div class="stat-label">已解决问题</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-unsolved">—</div>
+            <div class="stat-label">未解决问题</div>
+          </div>
+        </div>
+        <div class="page-title" style="font-size:1.1rem; margin-bottom:16px;">最近问题</div>
+        <div id="dashboard-recent"></div>
+      </div>
+
+      <!-- Courses -->
+      <div id="page-courses" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">课程</div>
+            <div class="page-desc">浏览和管理大学课程。</div>
+          </div>
+          <div id="create-course-btn" style="display:none">
+            <button class="btn btn-teal" onclick="openCreateCourse()">+ 新建课程</button>
+          </div>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="course-search" placeholder="搜索课程…" oninput="filterCourses()">
+        </div>
+        <div id="courses-list"></div>
+      </div>
+
+      <!-- Questions -->
+      <div id="page-questions" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">所有问题</div>
+            <div class="page-desc">浏览所有课程的问题。</div>
+          </div>
+          <div id="ask-question-btn" style="display:none">
+            <button class="btn btn-gold" onclick="openAskQuestion()">+ 提问</button>
+          </div>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="question-search" placeholder="搜索问题…" oninput="filterQuestions()">
+          <select id="question-filter" onchange="filterQuestions()" style="width:160px">
+            <option value="">全部状态</option>
+            <option value="false">未解决</option>
+            <option value="true">已解决</option>
+          </select>
+        </div>
+        <div id="questions-list"></div>
+      </div>
+
+      <!-- My Questions -->
+      <div id="page-my-questions" class="page">
+        <div class="page-header">
+          <div>
+            <div class="page-title">我的问题</div>
+            <div class="page-desc">您发布的问题。</div>
+          </div>
+          <div id="ask-question-btn2" style="display:none">
+            <button class="btn btn-gold" onclick="openAskQuestion()">+ Ask Question</button>
+          </div>
+        </div>
+        <div id="my-questions-list"></div>
+      </div>
+
+      <!-- Question Detail (dynamic page) -->
+      <div id="page-question-detail" class="page">
+        <button class="btn btn-outline btn-sm" onclick="showPage('questions')" style="margin-bottom:20px">← 返回</button>
+        <div id="question-detail-content"></div>
+        <hr class="divider">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <div class="page-title" style="font-size:1.1rem;">回答</div>
+          <button class="btn btn-gold btn-sm" onclick="openPostAnswer()">发布回答</button>
+        </div>
+        <div id="answers-list"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
+
+<!-- Ask Question Modal -->
+<div class="modal-overlay" id="modal-ask">
+  <div class="modal">
+    <div class="modal-title">提问</div>
+    <div class="form-group">
+      <label>课程</label>
+      <select id="ask-course"></select>
+    </div>
+    <div class="form-group">
+      <label>标题</label>
+      <input type="text" id="ask-title" placeholder="简洁的描述性标题">
+    </div>
+    <div class="form-group">
+      <label>详情</label>
+      <textarea id="ask-content" placeholder="详细描述您的问题…" rows="5"></textarea>
+    </div>
+    <div id="ask-msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-ask')">取消</button>
+      <button class="btn btn-gold" onclick="submitQuestion()">提交问题</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Course Modal -->
+<div class="modal-overlay" id="modal-course">
+  <div class="modal">
+    <div class="modal-title">创建新课程</div>
+    <div class="form-group">
+      <label>课程名称</label>
+      <input type="text" id="course-name" placeholder="例如：算法导论">
+    </div>
+    <div class="form-group">
+      <label>专业</label>
+      <input type="text" id="course-major" placeholder="例如：计算机科学">
+    </div>
+    <div class="form-group">
+      <label>学期</label>
+      <input type="text" id="course-semester" placeholder="例如：2024-秋季">
+    </div>
+    <div class="form-group">
+      <label>描述</label>
+      <textarea id="course-desc" placeholder="可选的课程描述…" rows="3"></textarea>
+    </div>
+    <div id="course-msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-course')">取消</button>
+      <button class="btn btn-teal" onclick="createCourse()">创建课程</button>
+    </div>
+  </div>
+</div>
+
+<!-- Post Answer Modal -->
+<div class="modal-overlay" id="modal-answer">
+  <div class="modal">
+    <div class="modal-title">发布回答</div>
+    <div class="form-group">
+      <label>您的回答</label>
+      <textarea id="answer-content" placeholder="撰写详细、有帮助的回答…" rows="7"></textarea>
+    </div>
+    <div id="answer-msg" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-answer')">取消</button>
+      <button class="btn btn-gold" onclick="submitAnswer()">发布回答</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8080/api';
+let token = '', currentUser = null, allCourses = [], allQuestions = [], currentQuestionId = null;
+
+// ── AUTH ──────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
+  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
+  const msg = document.getElementById('login-msg');
+  if (!username || !password) { showMsg(msg, '请输入用户名和密码', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/user/login`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    if (res.ok) {
+      const data = await res.json();
+      token = data.token;
+      currentUser = data;
+      localStorage.setItem('uniask_token', token);
+      localStorage.setItem('uniask_user', JSON.stringify(data));
+      launchApp();
+    } else {
+      showMsg(msg, '用户名或密码错误', 'error');
+    }
+  } catch (e) {
+    showMsg(msg, '无法连接到服务器。请确保后端正在运行。', 'error');
+  }
+}
+
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const role = document.getElementById('reg-role').value;
+  const msg = document.getElementById('reg-msg');
+  if (!username || !password) { showMsg(msg, '用户名和密码必填', 'error'); return; }
+  try {
+    const res = await fetch(`${API}/user/register`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username, email, password, role})
+    });
+    const text = await res.text();
+    if (res.ok || res.status === 201) {
+      showMsg(msg, '账户创建成功！现在可以登录了。', 'success');
+      setTimeout(() => switchAuthTab('login'), 1500);
+    } else {
+      showMsg(msg, text || '注册失败', 'error');
+    }
+  } catch (e) {
+    showMsg(msg, '无法连接到服务器', 'error');
+  }
+}
+
+function logout() {
+  token = ''; currentUser = null;
+  localStorage.removeItem('uniask_token');
+  localStorage.removeItem('uniask_user');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ── APP BOOT ──────────────────────────────────────────────
+function launchApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('topbar-username').textContent = currentUser.username;
+  const rolePill = document.getElementById('topbar-role');
+  rolePill.textContent = currentUser.role;
+  rolePill.className = `role-pill role-${currentUser.role}`;
+
+  // Show role-specific UI
+  if (currentUser.role === 'teacher') {
+    document.getElementById('create-course-btn').style.display = '';
+  }
+  if (currentUser.role === 'student') {
+    document.getElementById('ask-question-btn').style.display = '';
+    document.getElementById('ask-question-btn2').style.display = '';
+  }
+
+  loadDashboard();
+  loadCourses();
+  loadQuestions();
+}
+
+// Check for saved session
+window.addEventListener('DOMContentLoaded', () => {
+  const savedToken = localStorage.getItem('uniask_token');
+  const savedUser = localStorage.getItem('uniask_user');
+  if (savedToken && savedUser) {
+    token = savedToken;
+    currentUser = JSON.parse(savedUser);
+    launchApp();
+  }
+});
+
+// ── API HELPER ────────────────────────────────────────────
+async function api(method, path, body) {
+  const opts = {
+    method,
+    headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${token}`}
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  if (res.status === 401) { logout(); return null; }
+  if (res.status === 204) return true;
+  const text = await res.text();
+  try { return JSON.parse(text); } catch { return text; }
+}
+
+// ── PAGES ────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.textContent.trim().toLowerCase().includes(name.replace('-',' '))) n.classList.add('active');
+  });
+  if (name === 'my-questions') loadMyQuestions();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────
+async function loadDashboard() {
+  const [courses, questions] = await Promise.all([
+    api('GET','/courses'), api('GET','/questions')
+  ]);
+  if (!courses || !questions) return;
+  const solved = questions.filter(q => q.isSolved).length;
+  document.getElementById('stat-courses').textContent = courses.length;
+  document.getElementById('stat-questions').textContent = questions.length;
+  document.getElementById('stat-solved').textContent = solved;
+  document.getElementById('stat-unsolved').textContent = questions.length - solved;
+
+  const recent = questions.slice(-5).reverse();
+  const el = document.getElementById('dashboard-recent');
+  el.innerHTML = recent.length ? recent.map(renderQuestionCard).join('') : emptyState('暂无问题');
+}
+
+// ── COURSES ──────────────────────────────────────────────
+async function loadCourses() {
+  allCourses = await api('GET','/courses') || [];
+  renderCourses(allCourses);
+}
+
+function filterCourses() {
+  const kw = document.getElementById('course-search').value.toLowerCase();
+  renderCourses(allCourses.filter(c => c.name.toLowerCase().includes(kw) || c.major.toLowerCase().includes(kw)));
+}
+
+function renderCourses(courses) {
+  const el = document.getElementById('courses-list');
+  el.innerHTML = courses.length ? courses.map(c => `
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">${esc(c.name)}</div>
+          <div class="card-meta">
+            <span>📖 ${esc(c.major)}</span>
+            <span>🗓 ${esc(c.semester)}</span>
+            <span>👨‍🏫 ${esc(c.teacher?.username || 'Unknown')}</span>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="viewCourseQuestions(${c.id})">查看问题</button>
+      </div>
+      ${c.description ? `<div class="card-body" style="margin-top:8px">${esc(c.description)}</div>` : ''}
+    </div>
+  `).join('') : emptyState('未找到课程');
+}
+
+function viewCourseQuestions(courseId) {
+  showPage('questions');
+  loadQuestionsByCourse(courseId);
+}
+
+async function loadQuestionsByCourse(courseId) {
+  const questions = await api('GET', `/questions/course/${courseId}`) || [];
+  allQuestions = questions;
+  renderQuestions(questions);
+}
+
+function openCreateCourse() { openModal('modal-course'); }
+
+async function createCourse() {
+  const name = document.getElementById('course-name').value.trim();
+  const major = document.getElementById('course-major').value.trim();
+  const semester = document.getElementById('course-semester').value.trim();
+  const description = document.getElementById('course-desc').value.trim();
+  const msg = document.getElementById('course-msg');
+  if (!name || !major || !semester) { showMsg(msg, '课程名称、专业和学期必填', 'error'); return; }
+
+  const body = { name, major, semester, description, teacher: { id: currentUser.id } };
+  const result = await api('POST', '/courses', body);
+  if (typeof result === 'string' && result.includes('successfully')) {
+    showMsg(msg, result, 'success');
+    setTimeout(() => { closeModal('modal-course'); loadCourses(); }, 1000);
+  } else {
+    showMsg(msg, result || '创建课程失败', 'error');
+  }
+}
+
+// ── QUESTIONS ────────────────────────────────────────────
+async function loadQuestions() {
+  allQuestions = await api('GET','/questions') || [];
+  renderQuestions(allQuestions);
+}
+
+function filterQuestions() {
+  const kw = document.getElementById('question-search').value.toLowerCase();
+  const status = document.getElementById('question-filter').value;
+  let filtered = allQuestions.filter(q =>
+    q.title.toLowerCase().includes(kw) || (q.content || '').toLowerCase().includes(kw)
+  );
+  if (status !== '') filtered = filtered.filter(q => String(q.isSolved) === status);
+  renderQuestions(filtered);
+}
+
+function renderQuestions(questions) {
+  const el = document.getElementById('questions-list');
+  el.innerHTML = questions.length ? questions.map(renderQuestionCard).join('') : emptyState('未找到问题');
+}
+
+function renderQuestionCard(q) {
+  return `
+    <div class="card card-click" onclick="viewQuestion(${q.id})">
+      <div class="card-header">
+        <div style="flex:1">
+          <div class="card-title">${esc(q.title)}</div>
+          <div class="card-meta">
+            <span>👤 ${esc(q.student?.username || 'Unknown')}</span>
+            <span>📚 ${esc(q.course?.name || 'Unknown')}</span>
+            <span>🕐 ${formatDate(q.createTime)}</span>
+          </div>
+        </div>
+        <span class="badge ${q.isSolved ? 'badge-solved' : 'badge-unsolved'}">${q.isSolved ? '✓ 已解决' : '未解决'}</span>
+      </div>
+      <div class="card-body" style="margin-top:6px">${esc(truncate(q.content, 120))}</div>
+    </div>
+  `;
+}
+
+async function viewQuestion(id) {
+  currentQuestionId = id;
+  showPage('question-detail');
+  const q = await api('GET', `/questions/${id}`);
+  if (!q) return;
+
+  const answers = await api('GET', `/answers/question/${id}`) || [];
+  const canSolve = currentUser.role === 'teacher' || (currentUser.role === 'student' && q.student?.id === currentUser.id);
+
+  document.getElementById('question-detail-content').innerHTML = `
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header">
+        <div style="flex:1">
+          <div class="card-title" style="font-size:1.2rem">${esc(q.title)}</div>
+          <div class="card-meta">
+            <span>👤 ${esc(q.student?.username || 'Unknown')}</span>
+            <span>📚 ${esc(q.course?.name || 'Unknown')}</span>
+            <span>🕐 ${formatDate(q.createTime)}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="badge ${q.isSolved ? 'badge-solved':'badge-unsolved'}">${q.isSolved ? '✓ 已解决':'未解决'}</span>
+          ${canSolve && !q.isSolved ? `<button class="btn btn-teal btn-sm" onclick="markSolved(${q.id})">标记为已解决</button>` : ''}
+        </div>
+      </div>
+      <div class="card-body" style="margin-top:12px">${esc(q.content)}</div>
+      ${q.aiAnswer ? `
+        <div class="ai-box">
+          <div class="ai-box-header"><span class="ai-icon">🤖</span><span class="ai-label">AI 助手回答</span></div>
+          <div class="ai-content">${esc(q.aiAnswer)}</div>
+        </div>
+      ` : `
+        <div style="margin-top:12px">
+          <button class="btn btn-outline btn-sm" onclick="regenerateAI(${q.id})">🤖 生成AI回答</button>
+        </div>
+      `}
+    </div>
+  `;
+
+  const answersEl = document.getElementById('answers-list');
+  if (answers.length === 0) {
+    answersEl.innerHTML = emptyState('暂无回答。成为第一个回答者！');
+  } else {
+    answersEl.innerHTML = answers.map(a => `
+      <div class="answer-card ${a.isAccepted ? 'accepted' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <strong>${esc(a.author?.username || 'Unknown')}</strong>
+            <span style="color:var(--muted);font-size:12px;margin-left:10px">${formatDate(a.createTime)}</span>
+            ${a.isAccepted ? '<span class="badge badge-accepted" style="margin-left:8px">✓ 最佳回答</span>' : ''}
+          </div>
+          ${canSolve && !a.isAccepted ? `<button class="btn btn-teal btn-sm" onclick="acceptAnswer(${a.id})">采纳</button>` : ''}
+        </div>
+        <div style="margin-top:10px;font-size:14px">${esc(a.content)}</div>
+      </div>
+    `).join('');
+  }
+}
+
+async function markSolved(questionId) {
+  const result = await api('PUT', `/questions/${questionId}/solve?operatorId=${currentUser.id}`);
+  viewQuestion(questionId);
+}
+
+async function acceptAnswer(answerId) {
+  await api('PUT', `/answers/${answerId}/accept`);
+  viewQuestion(currentQuestionId);
+}
+
+async function regenerateAI(questionId) {
+  const el = document.querySelector('.ai-box, [onclick^="regenerateAI"]');
+  if (el) el.innerHTML = '<div class="spinner" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--teal)"></div> 正在生成AI回答…';
+  await api('PUT', `/questions/${questionId}/ai-answer`);
+  viewQuestion(questionId);
+}
+
+// ── MY QUESTIONS ─────────────────────────────────────────
+async function loadMyQuestions() {
+  const questions = await api('GET', `/questions/student/${currentUser.id}`) || [];
+  const el = document.getElementById('my-questions-list');
+  el.innerHTML = questions.length ? questions.map(renderQuestionCard).join('') : emptyState('您还没有发布任何问题。');
+}
+
+// ── ASK QUESTION ─────────────────────────────────────────
+function openAskQuestion() {
+  const sel = document.getElementById('ask-course');
+  sel.innerHTML = allCourses.map(c => `<option value="${c.id}">${esc(c.name)} — ${esc(c.semester)}</option>`).join('');
+  openModal('modal-ask');
+}
+
+async function submitQuestion() {
+  const title = document.getElementById('ask-title').value.trim();
+  const content = document.getElementById('ask-content').value.trim();
+  const courseId = document.getElementById('ask-course').value;
+  const msg = document.getElementById('ask-msg');
+  if (!title || !content) { showMsg(msg, '标题和详情必填', 'error'); return; }
+
+  const body = { title, content, course: { id: parseInt(courseId) }, student: { id: currentUser.id } };
+  const result = await api('POST', '/questions', body);
+  if (typeof result === 'string' && result.includes('successfully')) {
+    showMsg(msg, '问题已提交！AI回答正在生成中…', 'success');
+    document.getElementById('ask-title').value = '';
+    document.getElementById('ask-content').value = '';
+    setTimeout(() => { closeModal('modal-ask'); loadQuestions(); loadDashboard(); }, 1500);
+  } else {
+    showMsg(msg, result || '提交问题失败', 'error');
+  }
+}
+
+// ── POST ANSWER ──────────────────────────────────────────
+function openPostAnswer() { openModal('modal-answer'); }
+
+async function submitAnswer() {
+  const content = document.getElementById('answer-content').value.trim();
+  const msg = document.getElementById('answer-msg');
+  if (!content) { showMsg(msg, '回答内容不能为空', 'error'); return; }
+
+  const body = { content, question: { id: currentQuestionId }, author: { id: currentUser.id } };
+  const result = await api('POST', '/answers', body);
+  if (result && result.id) {
+    document.getElementById('answer-content').value = '';
+    closeModal('modal-answer');
+    viewQuestion(currentQuestionId);
+  } else {
+    showMsg(msg, '发布回答失败', 'error');
+  }
+}
+
+// ── UTILS ────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function truncate(s, n) { if (!s) return ''; return s.length > n ? s.slice(0,n) + '…' : s; }
+function formatDate(dt) { if (!dt) return ''; try { return new Date(dt).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}); } catch { return dt; } }
+function emptyState(text) { return `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">${text}</div></div>`; }
+function showMsg(el, text, type) {
+  el.textContent = text;
+  el.className = `msg ${type}`;
+}
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+</script>
+</body>
+</html>
