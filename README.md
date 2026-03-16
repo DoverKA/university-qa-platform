@@ -153,6 +153,7 @@ mvn spring-boot:run
 ### 课程相关
 - `GET /api/courses` - 获取所有课程
 - `POST /api/courses` - 创建课程（教师）
+- `POST /api/courses/sync/sql` - 从外部 SQL 表同步教师与课程
 
 ### 问题相关
 - `GET /api/questions` - 获取所有问题
@@ -217,6 +218,26 @@ ai:
     url: https://api.anthropic.com/v1/messages
   model: claude-sonnet-4-20250514
 ```
+
+### 外部 SQL 课程/教师自动同步（可选）
+
+如果你已经有教务数据库中的教师和课程表，可以开启自动同步，这样前端无需手动“新建课程”。
+
+```yaml
+sync:
+  sql:
+    enabled: true
+    run-on-startup: true
+    teacher-query: SELECT username, email FROM teacher
+    course-query: SELECT name, major, semester, teacher_username, description FROM external_course
+    default-teacher-password: 123456
+```
+
+说明：
+- `teacher-query` 必须返回 `username`（可选 `email`）。
+- `course-query` 必须返回 `name`、`major`、`semester`、`teacher_username`（可选 `description`）。
+- 开启 `run-on-startup` 后，服务启动会自动同步一次。
+- 也可手动调用 `POST /api/courses/sync/sql` 触发同步。
 
 ### JWT 配置
 
