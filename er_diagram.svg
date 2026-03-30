@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="980" viewBox="0 0 1500 980">
+  <defs>
+    <style>
+      .title { font: 700 34px "Microsoft YaHei", "PingFang SC", sans-serif; fill: #1f2937; }
+      .box { fill: #f8fbff; stroke: #1d4ed8; stroke-width: 2.5; rx: 14; ry: 14; }
+      .head { fill: #dbeafe; stroke: #1d4ed8; stroke-width: 2.5; rx: 14; ry: 14; }
+      .headText { font: 700 24px "Microsoft YaHei", "PingFang SC", sans-serif; fill: #1e3a8a; }
+      .field { font: 20px "Microsoft YaHei", "PingFang SC", sans-serif; fill: #334155; }
+      .pk { font: 700 20px "Microsoft YaHei", "PingFang SC", sans-serif; fill: #b91c1c; }
+      .fk { font: 700 20px "Microsoft YaHei", "PingFang SC", sans-serif; fill: #0f766e; }
+      .line { stroke: #475569; stroke-width: 2.5; fill: none; }
+      .label { font: 18px "Microsoft YaHei", "PingFang SC", sans-serif; fill: #111827; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#475569" />
+    </marker>
+  </defs>
+
+  <text x="560" y="55" class="title">高校课程问答系统 ER 图</text>
+
+  <rect x="110" y="120" width="320" height="225" class="box"/>
+  <rect x="110" y="120" width="320" height="50" class="head"/>
+  <text x="225" y="153" class="headText">用户表 User</text>
+  <text x="135" y="205" class="pk">PK</text><text x="185" y="205" class="field">id 用户编号</text>
+  <text x="185" y="245" class="field">username 用户名</text>
+  <text x="185" y="285" class="field">password 密码</text>
+  <text x="185" y="325" class="field">email 邮箱</text>
+  <text x="185" y="365" class="field">role 角色</text>
+
+  <rect x="590" y="120" width="340" height="265" class="box"/>
+  <rect x="590" y="120" width="340" height="50" class="head"/>
+  <text x="705" y="153" class="headText">课程表 Course</text>
+  <text x="615" y="205" class="pk">PK</text><text x="665" y="205" class="field">id 课程编号</text>
+  <text x="615" y="245" class="field">name 课程名称</text>
+  <text x="615" y="285" class="field">major 所属专业</text>
+  <text x="615" y="325" class="field">semester 开课学期</text>
+  <text x="615" y="365" class="field">description 课程描述</text>
+  <text x="615" y="405" class="fk">FK</text><text x="665" y="405" class="field">teacher_id 教师编号</text>
+  <text x="615" y="445" class="field">create_time 创建时间</text>
+
+  <rect x="110" y="560" width="360" height="355" class="box"/>
+  <rect x="110" y="560" width="360" height="50" class="head"/>
+  <text x="215" y="593" class="headText">问题表 Question</text>
+  <text x="135" y="645" class="pk">PK</text><text x="185" y="645" class="field">id 问题编号</text>
+  <text x="135" y="685" class="field">title 问题标题</text>
+  <text x="135" y="725" class="field">content 问题内容</text>
+  <text x="135" y="765" class="fk">FK</text><text x="185" y="765" class="field">course_id 课程编号</text>
+  <text x="135" y="805" class="fk">FK</text><text x="185" y="805" class="field">student_id 学生编号</text>
+  <text x="185" y="845" class="field">is_solved 是否解决</text>
+  <text x="185" y="885" class="field">create_time 创建时间</text>
+  <text x="185" y="925" class="field">ai_answer AI回答</text>
+
+  <rect x="1030" y="560" width="340" height="305" class="box"/>
+  <rect x="1030" y="560" width="340" height="50" class="head"/>
+  <text x="1145" y="593" class="headText">回答表 Answer</text>
+  <text x="1055" y="645" class="pk">PK</text><text x="1105" y="645" class="field">id 回答编号</text>
+  <text x="1055" y="685" class="fk">FK</text><text x="1105" y="685" class="field">question_id 问题编号</text>
+  <text x="1055" y="725" class="fk">FK</text><text x="1105" y="725" class="field">user_id 用户编号</text>
+  <text x="1105" y="765" class="field">content 回答内容</text>
+  <text x="1105" y="805" class="field">create_time 创建时间</text>
+  <text x="1105" y="845" class="field">is_accepted 是否采纳</text>
+
+  <path d="M430 220 L590 220" class="line" marker-end="url(#arrow)"/>
+  <text x="485" y="205" class="label">1 对多</text>
+
+  <path d="M250 345 L250 560" class="line" marker-end="url(#arrow)"/>
+  <text x="270" y="455" class="label">1 对多</text>
+
+  <path d="M700 385 L700 470 L390 470 L390 560" class="line" marker-end="url(#arrow)"/>
+  <text x="520" y="455" class="label">1 对多</text>
+
+  <path d="M470 700 L1030 700" class="line" marker-end="url(#arrow)"/>
+  <text x="730" y="685" class="label">1 对多</text>
+
+  <path d="M430 120 L1000 120 L1000 520 L1180 520 L1180 560" class="line" marker-end="url(#arrow)"/>
+  <text x="1025" y="505" class="label">1 对多</text>
+</svg>

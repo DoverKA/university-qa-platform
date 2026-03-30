@@ -1,907 +1,608 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UniAsk — 大学问答平台</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --ink: #1a1a2e;
-    --paper: #f5f0e8;
-    --cream: #ede8dc;
-    --gold: #c9a84c;
-    --gold-light: #e8c97a;
-    --rust: #c0392b;
-    --teal: #1a6b6b;
-    --teal-light: #d4eae9;
-    --muted: #7a7568;
-    --border: #d5cfc3;
-    --white: #ffffff;
-    --shadow: 0 2px 20px rgba(26,26,46,0.08);
-    --radius: 10px;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    min-height: 100vh;
-    font-size: 15px;
-    line-height: 1.6;
-  }
-
-  /* ── AUTH SCREEN ── */
-  #auth-screen {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 100vh;
-    background: var(--ink);
-    position: relative; overflow: hidden;
-  }
-  #auth-screen::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at 70% 30%, rgba(201,168,76,0.12) 0%, transparent 60%),
-                radial-gradient(ellipse at 20% 80%, rgba(26,107,107,0.15) 0%, transparent 50%);
-  }
-  .auth-card {
-    background: var(--white);
-    border-radius: 16px;
-    padding: 48px 44px;
-    width: 420px;
-    position: relative; z-index: 1;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.4);
-  }
-  .auth-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 2rem;
-    color: var(--ink);
-    margin-bottom: 4px;
-  }
-  .auth-logo span { color: var(--gold); }
-  .auth-subtitle { color: var(--muted); font-size: 13px; margin-bottom: 32px; }
-  .auth-tabs { display: flex; gap: 0; margin-bottom: 28px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  .auth-tab {
-    flex: 1; padding: 10px; text-align: center; cursor: pointer;
-    font-size: 14px; font-weight: 500; color: var(--muted);
-    transition: all 0.2s; background: transparent; border: none;
-  }
-  .auth-tab.active { background: var(--ink); color: var(--white); }
-  .form-group { margin-bottom: 16px; }
-  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.05em; text-transform: uppercase; }
-  input, select {
-    width: 100%; padding: 11px 14px;
-    border: 1.5px solid var(--border); border-radius: 8px;
-    font-family: inherit; font-size: 14px; color: var(--ink);
-    background: var(--paper); outline: none;
-    transition: border-color 0.2s;
-  }
-  input:focus, select:focus { border-color: var(--teal); background: var(--white); }
-  .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    padding: 11px 22px; border-radius: 8px; font-family: inherit;
-    font-size: 14px; font-weight: 500; cursor: pointer; border: none;
-    transition: all 0.18s; text-decoration: none;
-  }
-  .btn-primary { background: var(--ink); color: var(--white); width: 100%; }
-  .btn-primary:hover { background: #2d2d4a; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,26,46,0.25); }
-  .btn-gold { background: var(--gold); color: var(--white); }
-  .btn-gold:hover { background: var(--gold-light); color: var(--ink); }
-  .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--ink); }
-  .btn-outline:hover { border-color: var(--ink); }
-  .btn-teal { background: var(--teal); color: var(--white); }
-  .btn-teal:hover { background: #135555; }
-  .btn-danger { background: var(--rust); color: var(--white); }
-  .btn-sm { padding: 7px 14px; font-size: 13px; }
-  .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 12px; display: none; }
-  .msg.error { background: #fdecea; color: var(--rust); display: block; }
-  .msg.success { background: #e8f5e9; color: #2e7d32; display: block; }
-
-  /* ── MAIN APP ── */
-  #app { display: none; }
-  .topbar {
-    background: var(--ink); color: var(--white);
-    padding: 0 32px; height: 60px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-  }
-  .topbar-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; }
-  .topbar-logo span { color: var(--gold); }
-  .topbar-right { display: flex; align-items: center; gap: 16px; }
-  .user-badge {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 13px;
-  }
-  .role-pill {
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
-  }
-  .role-student { background: var(--teal-light); color: var(--teal); }
-  .role-teacher { background: #fef3cd; color: #856404; }
-  .role-admin { background: #f8d7da; color: #721c24; }
-
-  .layout { display: flex; min-height: calc(100vh - 60px); }
-  .sidebar {
-    width: 220px; min-width: 220px;
-    background: var(--white); border-right: 1px solid var(--border);
-    padding: 24px 0;
-    position: sticky; top: 60px; height: calc(100vh - 60px);
-    overflow-y: auto;
-  }
-  .sidebar-section { padding: 0 16px; margin-bottom: 24px; }
-  .sidebar-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 8px; margin-bottom: 8px; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 12px; border-radius: 8px;
-    cursor: pointer; font-size: 14px; color: var(--ink);
-    transition: all 0.15s; border: none; background: none; width: 100%; text-align: left;
-  }
-  .nav-item:hover { background: var(--cream); }
-  .nav-item.active { background: var(--teal-light); color: var(--teal); font-weight: 500; }
-  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
-
-  .main { flex: 1; padding: 32px; overflow-y: auto; }
-  .page { display: none; }
-  .page.active { display: block; }
-
-  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-  .page-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; }
-  .page-desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
-
-  /* ── CARDS ── */
-  .card {
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 24px;
-    box-shadow: var(--shadow); margin-bottom: 16px;
-    transition: box-shadow 0.2s;
-  }
-  .card:hover { box-shadow: 0 4px 28px rgba(26,26,46,0.12); }
-  .card-click { cursor: pointer; }
-  .card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  .card-title { font-size: 16px; font-weight: 500; color: var(--ink); }
-  .card-meta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
-  .card-body { font-size: 14px; color: #444; line-height: 1.6; }
-  .badge {
-    display: inline-flex; align-items: center; padding: 3px 10px;
-    border-radius: 20px; font-size: 11px; font-weight: 500;
-  }
-  .badge-solved { background: #e8f5e9; color: #2e7d32; }
-  .badge-unsolved { background: #fff3cd; color: #856404; }
-  .badge-accepted { background: var(--teal-light); color: var(--teal); }
-  .badge-course { background: var(--cream); color: var(--ink); }
-
-  /* ── AI ANSWER BOX ── */
-  .ai-box {
-    background: linear-gradient(135deg, #f0f7f7 0%, #e8f4f4 100%);
-    border: 1px solid #b2d8d8; border-radius: 10px;
-    padding: 16px 18px; margin-top: 16px;
-  }
-  .ai-box-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .ai-label {
-    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--teal);
-  }
-  .ai-icon { font-size: 16px; }
-  .ai-content { font-size: 13.5px; color: #2c4c4c; line-height: 1.7; white-space: pre-wrap; }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0;
-    background: rgba(26,26,46,0.55); backdrop-filter: blur(4px);
-    z-index: 1000; align-items: center; justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--white); border-radius: 14px;
-    padding: 36px; width: 540px; max-width: 95vw;
-    max-height: 90vh; overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    animation: modalIn 0.2s ease;
-  }
-  @keyframes modalIn { from { opacity:0; transform: translateY(16px) scale(0.97); } to { opacity:1; transform: none; } }
-  .modal-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; margin-bottom: 24px; }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
-  textarea {
-    width: 100%; padding: 11px 14px;
-    border: 1.5px solid var(--border); border-radius: 8px;
-    font-family: inherit; font-size: 14px; color: var(--ink);
-    background: var(--paper); outline: none; resize: vertical; min-height: 100px;
-    transition: border-color 0.2s;
-  }
-  textarea:focus { border-color: var(--teal); background: var(--white); }
-
-  /* ── STATS ── */
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 16px; margin-bottom: 28px; }
-  .stat-card {
-    background: var(--white); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px;
-    box-shadow: var(--shadow);
-  }
-  .stat-value { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--ink); }
-  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* ── SEARCH ── */
-  .search-bar {
-    display: flex; gap: 10px; margin-bottom: 20px;
-  }
-  .search-bar input { flex: 1; }
-
-  /* ── ANSWERS ── */
-  .answer-card {
-    background: var(--cream); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px; margin-bottom: 12px;
-    position: relative;
-  }
-  .answer-card.accepted { border-color: var(--teal); background: var(--teal-light); }
-  .answer-actions { display: flex; gap: 8px; margin-top: 12px; }
-
-  /* ── EMPTY STATE ── */
-  .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
-  .empty-text { font-size: 15px; }
-
-  /* ── LOADER ── */
-  .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(255,255,255,0.3); border-top-color: white;
-    border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
-  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; background: var(--cream); color: var(--muted); margin-right: 4px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniAsk 校园问答平台</title>
+  <style>
+    :root{--bg:#f6efe6;--card:rgba(255,255,255,.82);--ink:#17313a;--muted:#68716f;--line:rgba(23,49,58,.12);--teal:#0f766e;--gold:#b88628;--ok:#1f7a43;--bad:#b64539;--shadow:0 18px 60px rgba(20,35,42,.12)}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);background:radial-gradient(circle at top left,rgba(15,118,110,.12),transparent 28%),radial-gradient(circle at top right,rgba(184,134,40,.15),transparent 24%),linear-gradient(180deg,#fcf8f2,var(--bg))}
+    button,input,select,textarea{font:inherit}a{color:inherit}.hidden{display:none!important}
+    .btn{border:0;border-radius:999px;padding:10px 16px;cursor:pointer}.btn.primary{background:var(--ink);color:#fff}.btn.teal{background:var(--teal);color:#fff}.btn.gold{background:var(--gold);color:#fff}.btn.outline{background:#fff;border:1px solid var(--line)}
+    .msg{min-height:18px;margin-top:8px;font-size:13px}.msg.error{color:var(--bad)}.msg.success{color:var(--ok)}input,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:14px;background:#fff}label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}.f{margin-bottom:12px}
+    #auth{min-height:100vh;display:grid;place-items:center;padding:20px}.landing{width:min(1120px,100%);display:grid;grid-template-columns:1.1fr .9fr;gap:22px}.hero,.auth-card,.side,.panel,.stat,.card,.modal{background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(14px)}
+    .hero{border-radius:28px;padding:34px}.hero h1{margin:16px 0 10px;font-size:clamp(38px,5vw,60px);line-height:1.02;letter-spacing:-.04em}.hero p,.hint,.sub{color:var(--muted);line-height:1.8}.eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:#fff;color:var(--teal);font-size:13px}.features{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px}.feature{padding:16px;border-radius:18px;background:rgba(255,255,255,.64)}.feature strong{display:block;margin-bottom:8px}.demo{margin-top:22px;padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,rgba(15,118,110,.12),rgba(184,134,40,.12));font-size:13px;line-height:1.8}
+    .auth-card{border-radius:28px;padding:28px}.auth-card h2{margin:0;font-size:30px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:18px 0}.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:10px;cursor:pointer}.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+    #app{display:none}.top{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 20px;background:rgba(252,248,242,.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(23,49,58,.08)}.brand strong{display:block;font-size:20px}.brand span,.meta{color:var(--muted);font-size:13px}
+    .top-right,.actions,.search,.head{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.shell{width:min(1360px,calc(100% - 24px));margin:18px auto 28px;display:grid;grid-template-columns:270px 1fr;gap:18px}.side{border-radius:26px;padding:16px;height:fit-content}.nav{width:100%;text-align:left;border:0;background:transparent;border-radius:16px;padding:13px;cursor:pointer;margin-bottom:6px}.nav.active,.nav:hover{background:rgba(15,118,110,.1);color:var(--teal)}
+    .helper{margin-top:14px;padding:16px;border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.8),rgba(184,134,40,.12))}.helper p{margin:8px 0 12px;color:var(--muted);font-size:13px;line-height:1.7}
+    .page{display:none}.page.active{display:grid;gap:18px}.title{font-size:clamp(28px,4vw,40px);margin:0;letter-spacing:-.04em}.desc{margin:8px 0 0;color:var(--muted);line-height:1.8}.panel{border-radius:26px;padding:20px}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{border-radius:22px;padding:18px}.stat span{display:block;color:var(--muted);font-size:13px;margin-bottom:10px}.stat strong{font-size:34px;letter-spacing:-.04em}
+    .list{display:grid;gap:12px}.card{border-radius:22px;padding:18px}.card.click{cursor:pointer}.card.click:hover{transform:translateY(-2px)}.item{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}.item h3{margin:0;font-size:20px;line-height:1.35}.badge{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700}.badge.warn{background:rgba(184,134,40,.14);color:#8b5e10}.badge.ok{background:rgba(31,122,67,.14);color:var(--ok)}.copy{margin-top:12px;line-height:1.8;white-space:pre-wrap}.empty{padding:28px 18px;text-align:center;color:var(--muted);border:1px dashed rgba(23,49,58,.18);border-radius:20px}
+    .ai{margin-top:16px;padding:16px;border-radius:18px;background:linear-gradient(135deg,rgba(15,118,110,.1),rgba(184,134,40,.08))}.ai strong{display:block;margin-bottom:8px;color:var(--teal)}.answer.accepted{background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(31,122,67,.06))}
+    .composer{margin-bottom:16px;padding:16px;border-radius:18px;background:rgba(255,255,255,.72);border:1px solid var(--line)}.composer textarea{margin-bottom:10px}
+    .comment-board{margin-top:16px;padding-top:12px;border-top:1px dashed rgba(23,49,58,.14)}.comment-title{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--ink)}.comment-list{display:grid;gap:10px}.comment-item{padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.72);border:1px solid rgba(23,49,58,.1)}.comment-item.reply{margin-left:22px;background:rgba(255,255,255,.58)}.comment-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}.comment-author{font-weight:700}.comment-role{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:rgba(15,118,110,.1);color:var(--teal);font-size:12px;margin-left:8px}.comment-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.comment-btn{border:0;background:transparent;color:var(--muted);padding:0;cursor:pointer}.comment-btn.liked{color:var(--teal);font-weight:700}.reply-box{margin-top:10px}
+    .modal-mask{position:fixed;inset:0;display:none;place-items:center;padding:18px;background:rgba(18,24,27,.38);backdrop-filter:blur(6px);z-index:100}.modal-mask.open{display:grid}.modal{width:min(680px,100%);border-radius:28px;padding:22px;background:#fffdf9}.modal h3{margin:0 0 8px;font-size:26px}.modal p{margin:0 0 14px;color:var(--muted);line-height:1.7}.back{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+    @media (max-width:1080px){.landing,.shell{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}}@media (max-width:720px){#auth{padding:12px}.hero,.auth-card,.side,.panel,.card{padding:16px}.features,.metrics{grid-template-columns:1fr}.shell{width:min(100% - 12px,1360px)}}
+  </style>
 </head>
 <body>
-
-<!-- ═══════════════════════════════ AUTH SCREEN ═══════════════════════════════ -->
-<div id="auth-screen">
-  <div class="auth-card">
-    <div class="auth-logo">Uni<span>Ask</span></div>
-    <div class="auth-subtitle">大学问答平台</div>
-
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">登录</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">注册</button>
-    </div>
-
-    <!-- Login Form -->
-    <div id="login-form">
-      <div class="form-group">
-        <label>用户名</label>
-        <input type="text" id="login-username" placeholder="请输入用户名">
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="login-password" placeholder="请输入密码">
-      </div>
-      <button class="btn btn-primary" onclick="doLogin()">登录</button>
-      <div id="login-msg" class="msg"></div>
-    </div>
-
-    <!-- Register Form -->
-    <div id="register-form" style="display:none">
-      <div class="form-group">
-        <label>用户名</label>
-        <input type="text" id="reg-username" placeholder="选择用户名">
-      </div>
-      <div class="form-group">
-        <label>邮箱</label>
-        <input type="email" id="reg-email" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label>密码</label>
-        <input type="password" id="reg-password" placeholder="至少6位字符">
-      </div>
-      <div class="form-group">
-        <label>我是</label>
-        <select id="reg-role">
-          <option value="student">学生</option>
-          <option value="teacher">教师</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" onclick="doRegister()">创建账户</button>
-      <div id="reg-msg" class="msg"></div>
+  <div id="auth">
+    <div class="landing">
+      <section class="hero">
+        <div class="eyebrow">UniAsk / 校园课程问答</div>
+        <h1>把课程提问、教师答疑和 AI 辅助放进同一条工作流�?/h1>
+        <p>学生围绕具体课程发起问题，教师只看自己负责课程下的提问，管理员统一查看统计和系统状态。首次启动会自动准备演示账号和示例数据�?/p>
+        <div class="features">
+          <div class="feature"><strong>课程绑定</strong><span class="sub">提问天然带上下文，后续检索和管理更清楚�?/span></div>
+          <div class="feature"><strong>教师聚焦</strong><span class="sub">教师视图只显示自己课程中的问题，减少干扰�?/span></div>
+          <div class="feature"><strong>AI 辅助</strong><span class="sub">支持先生�?AI 预览，再补充人工回答和采纳�?/span></div>
+        </div>
+        <div class="demo">演示账号�?br>管理�?`admin / 123456`<br>教师 `teacher_liu / 123456`<br>学生 `student_lin / 123456`</div>
+      </section>
+      <section class="auth-card">
+        <h2>登录 UniAsk</h2>
+        <p class="hint">可以直接使用左侧演示账号进入，也可以注册新的学生或教师账号�?/p>
+        <div class="tabs">
+          <button id="tab-login" class="tab active" onclick="switchAuth('login')">登录</button>
+          <button id="tab-reg" class="tab" onclick="switchAuth('reg')">注册</button>
+        </div>
+        <div id="box-login">
+          <div class="f"><label for="login-name">用户�?/label><input id="login-name" placeholder="输入用户�?></div>
+          <div class="f"><label for="login-pass">密码</label><input id="login-pass" type="password" placeholder="输入密码"></div>
+          <button class="btn primary" style="width:100%" onclick="doLogin()">进入平台</button>
+          <div id="login-msg" class="msg"></div>
+        </div>
+        <div id="box-reg" class="hidden">
+          <div class="f"><label for="reg-name">用户�?/label><input id="reg-name" placeholder="例如：student_chen"></div>
+          <div class="f"><label for="reg-mail">邮箱</label><input id="reg-mail" placeholder="例如：name@example.com"></div>
+          <div class="f"><label for="reg-pass">密码</label><input id="reg-pass" type="password" placeholder="至少 6 �?></div>
+          <div class="f"><label for="reg-role">身份</label><select id="reg-role"><option value="student">学生</option><option value="teacher">教师</option></select></div>
+          <button class="btn primary" style="width:100%" onclick="doRegister()">创建账号</button>
+          <div id="reg-msg" class="msg"></div>
+        </div>
+      </section>
     </div>
   </div>
-</div>
-
-<!-- ═══════════════════════════════ MAIN APP ═══════════════════════════════ -->
-<div id="app">
-  <div class="topbar">
-    <div class="topbar-logo">Uni<span>Ask</span></div>
-    <div class="topbar-right">
-      <div class="user-badge">
-        <span id="topbar-username"></span>
-        <span id="topbar-role" class="role-pill"></span>
+  <div id="app">
+    <div class="top">
+      <div class="brand"><strong>UniAsk</strong><span>课程问答、AI 预览与管理工作台</span></div>
+      <div class="top-right">
+        <div class="btn outline" style="cursor:default"><span id="u-name"></span> · <span id="u-role"></span></div>
+        <div class="btn outline" style="cursor:default">未读通知 <strong id="notify-count">0</strong></div>
+        <a href="/manage.html" class="btn outline" style="text-decoration:none">管理中心</a>
+        <a href="/ask.html" class="btn outline" style="text-decoration:none">AI 预览�?/a>
+        <button class="btn outline" onclick="logout()">退出登�?/button>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="logout()" style="color:white;border-color:rgba(255,255,255,0.3)">退出登录</button>
+    </div>
+    <div class="shell">
+      <aside class="side">
+        <button class="nav active" data-page="dash" onclick="showPage('dash')">平台总览</button>
+        <button class="nav" data-page="courses" onclick="showPage('courses')">课程列表</button>
+        <button class="nav" data-page="questions" onclick="showPage('questions')">全部问题</button>
+        <button class="nav" data-page="mine" onclick="showPage('mine')">我的视图</button>
+        <div class="helper"><strong>使用建议</strong><p>学生更适合从“全部问题”和“我的视图”进入；教师先创建课程，再集中处理自己的课程问题�?/p><button class="btn teal" style="width:100%" onclick="refreshAll()">刷新全部数据</button></div>
+      </aside>
+      <main class="list">
+        <section id="p-dash" class="page active">
+          <div class="head">
+            <div><h2 class="title">平台总览</h2><p class="desc">快速查看课程规模、问题解决进度和最近动态�?/p></div>
+            <div class="actions"><button id="btn-create-course-dash" class="btn teal hidden" onclick="openModal('m-course')">新建课程</button><button id="btn-ask-dash" class="btn gold hidden" onclick="openAsk()">发起提问</button></div>
+          </div>
+          <div class="metrics">
+            <div class="stat"><span>课程总数</span><strong id="s-course">0</strong></div>
+            <div class="stat"><span>问题总数</span><strong id="s-question">0</strong></div>
+            <div class="stat"><span>已解�?/span><strong id="s-solved">0</strong></div>
+            <div class="stat"><span>待解�?/span><strong id="s-unsolved">0</strong></div>
+          </div>
+          <div class="panel"><h3 style="margin:0 0 14px">最近动�?/h3><div id="recent" class="list"></div></div>
+        </section>
+        <section id="p-courses" class="page">
+          <div class="head">
+            <div><h2 class="title">课程列表</h2><p class="desc">浏览课程信息，教师可以创建自己的课程并查看课程下的问题�?/p></div>
+            <button id="btn-create-course" class="btn teal hidden" onclick="openModal('m-course')">新建课程</button>
+          </div>
+          <div class="panel"><div class="search"><input id="course-key" placeholder="按课程名、专业或学期搜索" oninput="filterCourses()"><button class="btn outline" onclick="loadCourses()">刷新课程</button></div><div id="course-list" class="list" style="margin-top:14px"></div></div>
+        </section>
+        <section id="p-questions" class="page">
+          <div class="head">
+            <div><h2 class="title">全部问题</h2><p class="desc">按标题、内容和解决状态筛选，点进详情继续查看 AI 回答和人工回答�?/p></div>
+            <button id="btn-ask" class="btn gold hidden" onclick="openAsk()">发起提问</button>
+          </div>
+          <div class="panel"><div class="search"><input id="q-key" placeholder="搜索标题或内�? oninput="filterQuestions()"><select id="q-state" onchange="filterQuestions()"><option value="">全部状�?/option><option value="false">待解�?/option><option value="true">已解�?/option></select><button class="btn outline" onclick="loadQuestions()">刷新问题</button></div><div id="q-list" class="list" style="margin-top:14px"></div></div>
+        </section>
+        <section id="p-mine" class="page">
+          <div class="head">
+            <div><h2 id="mine-title" class="title">我的问题</h2><p id="mine-desc" class="desc">查看你发起的问题与处理进度�?/p></div>
+            <button id="btn-ask2" class="btn gold hidden" onclick="openAsk()">继续提问</button>
+          </div>
+          <div class="panel"><div id="mine-list" class="list"></div></div>
+        </section>
+        <section id="p-detail" class="page">
+          <div class="back"><button class="btn outline" onclick="showPage(detailReturnPage)">返回上一�?/button><div class="actions"><button class="btn outline" onclick="refreshDetail()">刷新详情</button><button class="btn gold" onclick="openModal('m-answer')">发布回答</button></div></div>
+          <div id="detail"></div>
+          <div class="panel"><h3 style="margin:0 0 8px">回答�?/h3><p class="desc" style="margin:0 0 14px">问题拥有者、课程教师和管理员都可以采纳答案�?/p><div id="answer-composer"></div><div id="answer-list" class="list"></div></div>
+        </section>
+      </main>
     </div>
   </div>
+  <div id="m-ask" class="modal-mask"><div class="modal"><h3>发起课程提问</h3><p>把课程背景、你遇到的现象，以及你已经尝试过的方向写清楚，会更容易得到高质量回答�?/p><div class="f"><label for="ask-course">所属课�?/label><select id="ask-course"></select></div><div class="f"><label for="ask-title">问题标题</label><input id="ask-title" placeholder="例如：红黑树�?AVL 树该怎么选？"></div><div class="f"><label for="ask-content">详细说明</label><textarea id="ask-content" rows="6" placeholder="补充背景、报错、思路或困惑点�?></textarea></div><div id="ask-msg" class="msg"></div><div class="actions"><button class="btn outline" onclick="closeModal('m-ask')">取消</button><button class="btn gold" onclick="submitQuestion()">提交问题</button></div></div></div>
+  <div id="m-course" class="modal-mask"><div class="modal"><h3>创建课程</h3><p>教师可直接创建自己的课程，后续学生提问会自动关联到这里�?/p><div class="f"><label for="course-name">课程名称</label><input id="course-name" placeholder="例如：数据库系统"></div><div class="f"><label for="course-major">所属专�?/label><input id="course-major" placeholder="例如：软件工�?></div><div class="f"><label for="course-semester">学期</label><input id="course-semester" placeholder="例如�?026 �?></div><div class="f"><label for="course-desc">课程简�?/label><textarea id="course-desc" rows="5" placeholder="简单说明课程主题、对象或目标�?></textarea></div><div id="course-msg" class="msg"></div><div class="actions"><button class="btn outline" onclick="closeModal('m-course')">取消</button><button class="btn teal" onclick="createCourse()">创建课程</button></div></div></div>
+  <div id="m-answer" class="modal-mask"><div class="modal"><h3>发布回答</h3><p>尽量用条理清晰的方式回答，必要时可以分步骤给出思路�?/p><div class="f"><label for="answer-content">回答内容</label><textarea id="answer-content" rows="7" placeholder="写下你的理解、步骤或建议�?></textarea></div><div id="answer-msg" class="msg"></div><div class="actions"><button class="btn outline" onclick="closeModal('m-answer')">取消</button><button class="btn gold" onclick="submitAnswer()">发布回答</button></div></div></div>
+  <script>
+    const API = `${window.location.origin}/api`;
+    const roleMap = { student: 'ѧ��', teacher: '��ʦ', admin: '����Ա' };
+    let token = '';
+    let user = null;
+    let allCourses = [];
+    let allQuestions = [];
+    let currentQuestionId = null;
+    let detailReturnPage = 'questions';
 
-  <div class="layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-section">
-        <div class="sidebar-label">菜单</div>
-        <button class="nav-item active" onclick="showPage('dashboard')">
-          <span class="nav-icon">📊</span> 仪表盘
-        </button>
-        <button class="nav-item" onclick="showPage('courses')">
-          <span class="nav-icon">📚</span> 课程
-        </button>
-        <button class="nav-item" onclick="showPage('questions')">
-          <span class="nav-icon">❓</span> 问题
-        </button>
-        <button class="nav-item" onclick="showPage('my-questions')">
-          <span class="nav-icon">📝</span> 我的问题
-        </button>
-      </div>
-    </aside>
+    const arr = v => Array.isArray(v) ? v : (Array.isArray(v?.data) ? v.data : (Array.isArray(v?.content) ? v.content : []));
+    const esc = v => v == null ? '' : String(v)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    const fmt = v => v ? new Date(v).toLocaleString('zh-CN', { hour12: false }) : '';
+    const empty = t => `<div class="empty">${esc(t)}</div>`;
+    const box = id => document.getElementById(id);
 
-    <!-- Main Content -->
-    <main class="main">
-
-      <!-- Dashboard -->
-      <div id="page-dashboard" class="page active">
-        <div class="page-header">
-          <div>
-            <div class="page-title">仪表盘</div>
-            <div class="page-desc">欢迎回来！这里是平台概览。</div>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value" id="stat-courses">—</div>
-            <div class="stat-label">课程总数</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-questions">—</div>
-            <div class="stat-label">问题总数</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-solved">—</div>
-            <div class="stat-label">已解决问题</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value" id="stat-unsolved">—</div>
-            <div class="stat-label">未解决问题</div>
-          </div>
-        </div>
-        <div class="page-title" style="font-size:1.1rem; margin-bottom:16px;">最近问题</div>
-        <div id="dashboard-recent"></div>
-      </div>
-
-      <!-- Courses -->
-      <div id="page-courses" class="page">
-        <div class="page-header">
-          <div>
-            <div class="page-title">课程</div>
-            <div class="page-desc">浏览和管理大学课程。</div>
-          </div>
-          <div id="create-course-btn" style="display:none">
-            <button class="btn btn-teal" onclick="openCreateCourse()">+ 新建课程</button>
-          </div>
-        </div>
-        <div class="search-bar">
-          <input type="text" id="course-search" placeholder="搜索课程…" oninput="filterCourses()">
-        </div>
-        <div id="courses-list"></div>
-      </div>
-
-      <!-- Questions -->
-      <div id="page-questions" class="page">
-        <div class="page-header">
-          <div>
-            <div class="page-title">所有问题</div>
-            <div class="page-desc">浏览所有课程的问题。</div>
-          </div>
-          <div id="ask-question-btn" style="display:none">
-            <button class="btn btn-gold" onclick="openAskQuestion()">+ 提问</button>
-          </div>
-        </div>
-        <div class="search-bar">
-          <input type="text" id="question-search" placeholder="搜索问题…" oninput="filterQuestions()">
-          <select id="question-filter" onchange="filterQuestions()" style="width:160px">
-            <option value="">全部状态</option>
-            <option value="false">未解决</option>
-            <option value="true">已解决</option>
-          </select>
-        </div>
-        <div id="questions-list"></div>
-      </div>
-
-      <!-- My Questions -->
-      <div id="page-my-questions" class="page">
-        <div class="page-header">
-          <div>
-            <div class="page-title">我的问题</div>
-            <div class="page-desc">您发布的问题。</div>
-          </div>
-          <div id="ask-question-btn2" style="display:none">
-            <button class="btn btn-gold" onclick="openAskQuestion()">+ Ask Question</button>
-          </div>
-        </div>
-        <div id="my-questions-list"></div>
-      </div>
-
-      <!-- Question Detail (dynamic page) -->
-      <div id="page-question-detail" class="page">
-        <button class="btn btn-outline btn-sm" onclick="showPage('questions')" style="margin-bottom:20px">← 返回</button>
-        <div id="question-detail-content"></div>
-        <hr class="divider">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-          <div class="page-title" style="font-size:1.1rem;">回答</div>
-          <button class="btn btn-gold btn-sm" onclick="openPostAnswer()">发布回答</button>
-        </div>
-        <div id="answers-list"></div>
-      </div>
-
-    </main>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════ MODALS ═══════════════════════════════ -->
-
-<!-- Ask Question Modal -->
-<div class="modal-overlay" id="modal-ask">
-  <div class="modal">
-    <div class="modal-title">提问</div>
-    <div class="form-group">
-      <label>课程</label>
-      <select id="ask-course"></select>
-    </div>
-    <div class="form-group">
-      <label>标题</label>
-      <input type="text" id="ask-title" placeholder="简洁的描述性标题">
-    </div>
-    <div class="form-group">
-      <label>详情</label>
-      <textarea id="ask-content" placeholder="详细描述您的问题…" rows="5"></textarea>
-    </div>
-    <div id="ask-msg" class="msg"></div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('modal-ask')">取消</button>
-      <button class="btn btn-gold" onclick="submitQuestion()">提交问题</button>
-    </div>
-  </div>
-</div>
-
-<!-- Create Course Modal -->
-<div class="modal-overlay" id="modal-course">
-  <div class="modal">
-    <div class="modal-title">创建新课程</div>
-    <div class="form-group">
-      <label>课程名称</label>
-      <input type="text" id="course-name" placeholder="例如：算法导论">
-    </div>
-    <div class="form-group">
-      <label>专业</label>
-      <input type="text" id="course-major" placeholder="例如：计算机科学">
-    </div>
-    <div class="form-group">
-      <label>学期</label>
-      <input type="text" id="course-semester" placeholder="例如：2024-秋季">
-    </div>
-    <div class="form-group">
-      <label>描述</label>
-      <textarea id="course-desc" placeholder="可选的课程描述…" rows="3"></textarea>
-    </div>
-    <div id="course-msg" class="msg"></div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('modal-course')">取消</button>
-      <button class="btn btn-teal" onclick="createCourse()">创建课程</button>
-    </div>
-  </div>
-</div>
-
-<!-- Post Answer Modal -->
-<div class="modal-overlay" id="modal-answer">
-  <div class="modal">
-    <div class="modal-title">发布回答</div>
-    <div class="form-group">
-      <label>您的回答</label>
-      <textarea id="answer-content" placeholder="撰写详细、有帮助的回答…" rows="7"></textarea>
-    </div>
-    <div id="answer-msg" class="msg"></div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('modal-answer')">取消</button>
-      <button class="btn btn-gold" onclick="submitAnswer()">发布回答</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const API = 'http://localhost:8080/api';
-let token = '', currentUser = null, allCourses = [], allQuestions = [], currentQuestionId = null;
-
-// ── AUTH ──────────────────────────────────────────────────
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
-  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
-  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
-}
-
-async function doLogin() {
-  const username = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  const msg = document.getElementById('login-msg');
-  if (!username || !password) { showMsg(msg, '请输入用户名和密码', 'error'); return; }
-  try {
-    const res = await fetch(`${API}/user/login`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({username, password})
-    });
-    if (res.ok) {
-      const data = await res.json();
-      token = data.token;
-      currentUser = data;
-      localStorage.setItem('uniask_token', token);
-      localStorage.setItem('uniask_user', JSON.stringify(data));
-      launchApp();
-    } else {
-      showMsg(msg, '用户名或密码错误', 'error');
+    function msg(id, text, type = '') {
+        const el = box(id);
+        if (!el) return;
+        el.className = `msg ${type}`.trim();
+        el.textContent = text || '';
     }
-  } catch (e) {
-    showMsg(msg, '无法连接到服务器。请确保后端正在运行。', 'error');
-  }
-}
 
-async function doRegister() {
-  const username = document.getElementById('reg-username').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
-  const role = document.getElementById('reg-role').value;
-  const msg = document.getElementById('reg-msg');
-  if (!username || !password) { showMsg(msg, '用户名和密码必填', 'error'); return; }
-  try {
-    const res = await fetch(`${API}/user/register`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({username, email, password, role})
-    });
-    const text = await res.text();
-    if (res.ok || res.status === 201) {
-      showMsg(msg, '账户创建成功！现在可以登录了。', 'success');
-      setTimeout(() => switchAuthTab('login'), 1500);
-    } else {
-      showMsg(msg, text || '注册失败', 'error');
+    async function parse(response) {
+        const text = await response.text();
+        try {
+            return JSON.parse(text);
+        } catch {
+            return text;
+        }
     }
-  } catch (e) {
-    showMsg(msg, '无法连接到服务器', 'error');
-  }
-}
 
-function logout() {
-  token = ''; currentUser = null;
-  localStorage.removeItem('uniask_token');
-  localStorage.removeItem('uniask_user');
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-}
+    function pickMsg(data, fallback) {
+        return typeof data === 'object' && data?.message ? data.message : (data || fallback);
+    }
 
-// ── APP BOOT ──────────────────────────────────────────────
-function launchApp() {
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('topbar-username').textContent = currentUser.username;
-  const rolePill = document.getElementById('topbar-role');
-  rolePill.textContent = currentUser.role;
-  rolePill.className = `role-pill role-${currentUser.role}`;
+    function switchAuth(tab) {
+        box('box-login').classList.toggle('hidden', tab !== 'login');
+        box('box-reg').classList.toggle('hidden', tab !== 'reg');
+        box('tab-login').classList.toggle('active', tab === 'login');
+        box('tab-reg').classList.toggle('active', tab === 'reg');
+    }
 
-  // Show role-specific UI
-  if (currentUser.role === 'teacher') {
-    document.getElementById('create-course-btn').style.display = '';
-  }
-  if (currentUser.role === 'student') {
-    document.getElementById('ask-question-btn').style.display = '';
-    document.getElementById('ask-question-btn2').style.display = '';
-  }
+    async function doLogin() {
+        const username = box('login-name').value.trim();
+        const password = box('login-pass').value;
+        if (!username || !password) return msg('login-msg', '�������û��������롣', 'error');
+        try {
+            const response = await fetch(`${API}/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await parse(response);
+            if (!response.ok) return msg('login-msg', pickMsg(data, '�û��������벻��ȷ��'), 'error');
+            token = data.token;
+            user = data;
+            localStorage.setItem('uniask_token', token);
+            localStorage.setItem('uniask_user', JSON.stringify(data));
+            launch();
+        } catch {
+            msg('login-msg', '�޷����ӵ���������', 'error');
+        }
+    }
 
-  loadDashboard();
-  loadCourses();
-  loadQuestions();
-}
+    async function doRegister() {
+        const username = box('reg-name').value.trim();
+        const email = box('reg-mail').value.trim();
+        const password = box('reg-pass').value;
+        const role = box('reg-role').value;
+        if (!username || !password) return msg('reg-msg', '�û���������Ϊ�����', 'error');
+        if (password.length < 6) return msg('reg-msg', '����������Ҫ 6 λ��', 'error');
+        try {
+            const response = await fetch(`${API}/user/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password, role })
+            });
+            const data = await parse(response);
+            if (!response.ok) return msg('reg-msg', pickMsg(data, 'ע��ʧ�ܡ�'), 'error');
+            msg('reg-msg', 'ע��ɹ������ڿ���ֱ�ӵ�¼��', 'success');
+            setTimeout(() => switchAuth('login'), 800);
+        } catch {
+            msg('reg-msg', '�޷����ӵ���������', 'error');
+        }
+    }
 
-// Check for saved session
-window.addEventListener('DOMContentLoaded', () => {
-  const savedToken = localStorage.getItem('uniask_token');
-  const savedUser = localStorage.getItem('uniask_user');
-  if (savedToken && savedUser) {
-    token = savedToken;
-    currentUser = JSON.parse(savedUser);
-    launchApp();
-  }
-});
+    function logout() {
+        token = '';
+        user = null;
+        localStorage.removeItem('uniask_token');
+        localStorage.removeItem('uniask_user');
+        box('app').style.display = 'none';
+        box('auth').style.display = 'grid';
+        switchAuth('login');
+    }
 
-// ── API HELPER ────────────────────────────────────────────
-async function api(method, path, body) {
-  const opts = {
-    method,
-    headers: {'Content-Type':'application/json', 'Authorization': `Bearer ${token}`}
-  };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(API + path, opts);
-  if (res.status === 401) { logout(); return null; }
-  if (res.status === 204) return true;
-  const text = await res.text();
-  try { return JSON.parse(text); } catch { return text; }
-}
+    async function api(method, path, body) {
+        const options = {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        };
+        if (body) options.body = JSON.stringify(body);
+        const response = await fetch(API + path, options);
+        if (response.status === 401) {
+            logout();
+            return null;
+        }
+        if (response.status === 204) {
+            return true;
+        }
+        const data = await parse(response);
+        return response.ok ? data : pickMsg(data, data);
+    }
 
-// ── PAGES ────────────────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`page-${name}`).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.textContent.trim().toLowerCase().includes(name.replace('-',' '))) n.classList.add('active');
-  });
-  if (name === 'my-questions') loadMyQuestions();
-}
+    function configureMinePage() {
+        const nav = document.querySelector('.nav[data-page="mine"]');
+        if (user.role === 'teacher') {
+            nav.textContent = '�ҵĿγ�����';
+            box('mine-title').textContent = '�ҵĿγ�����';
+            box('mine-desc').textContent = '����ֻչʾ�㸺��γ��µ����⡣';
+        } else if (user.role === 'admin') {
+            nav.textContent = '������ͼ';
+            box('mine-title').textContent = '������ͼ';
+            box('mine-desc').textContent = '����Ա�ɿ��������ǰϵͳ���������⡣';
+        } else {
+            nav.textContent = '�ҵ�����';
+            box('mine-title').textContent = '�ҵ�����';
+            box('mine-desc').textContent = '�鿴�㷢��������봦�����ȡ�';
+        }
+    }
 
-// ── DASHBOARD ────────────────────────────────────────────
-async function loadDashboard() {
-  const [courses, questions] = await Promise.all([
-    api('GET','/courses'), api('GET','/questions')
-  ]);
-  if (!courses || !questions) return;
-  const solved = questions.filter(q => q.isSolved).length;
-  document.getElementById('stat-courses').textContent = courses.length;
-  document.getElementById('stat-questions').textContent = questions.length;
-  document.getElementById('stat-solved').textContent = solved;
-  document.getElementById('stat-unsolved').textContent = questions.length - solved;
+    function launch() {
+        box('auth').style.display = 'none';
+        box('app').style.display = 'block';
+        box('u-name').textContent = user.username;
+        box('u-role').textContent = roleMap[user.role] || user.role;
+        const student = user.role === 'student';
+        const teacher = user.role === 'teacher';
+        box('btn-create-course').classList.toggle('hidden', !teacher);
+        box('btn-create-course-dash').classList.toggle('hidden', !teacher);
+        box('btn-ask').classList.toggle('hidden', !student);
+        box('btn-ask2').classList.toggle('hidden', !student);
+        box('btn-ask-dash').classList.toggle('hidden', !student);
+        configureMinePage();
+        refreshAll();
+    }
 
-  const recent = questions.slice(-5).reverse();
-  const el = document.getElementById('dashboard-recent');
-  el.innerHTML = recent.length ? recent.map(renderQuestionCard).join('') : emptyState('暂无问题');
-}
+    window.addEventListener('DOMContentLoaded', () => {
+        const storedToken = localStorage.getItem('uniask_token');
+        const storedUser = localStorage.getItem('uniask_user');
+        if (storedToken && storedUser) {
+            token = storedToken;
+            user = JSON.parse(storedUser);
+            launch();
+        }
+    });
 
-// ── COURSES ──────────────────────────────────────────────
-async function loadCourses() {
-  allCourses = await api('GET','/courses') || [];
-  renderCourses(allCourses);
-}
+    function showPage(name) {
+        document.querySelectorAll('.page').forEach(node => node.classList.remove('active'));
+        document.querySelectorAll('.nav').forEach(node => node.classList.remove('active'));
+        box(`p-${name}`).classList.add('active');
+        const nav = document.querySelector(`.nav[data-page="${name}"]`);
+        if (nav) nav.classList.add('active');
+        if (name === 'mine') loadRoleQuestions();
+    }
 
-function filterCourses() {
-  const kw = document.getElementById('course-search').value.toLowerCase();
-  renderCourses(allCourses.filter(c => c.name.toLowerCase().includes(kw) || c.major.toLowerCase().includes(kw)));
-}
+    function renderQuestion(q) {
+        return `<div class="card click" onclick="viewQuestion(${q.id})"><div class="item"><div><h3>${esc(q.title)}</h3><div class="meta"><span>�����ˣ�${esc(q.student?.username || 'δ֪')}</span><span>�γ̣�${esc(q.course?.name || 'δָ��')}</span><span>${fmt(q.createTime)}</span></div></div><span class="badge ${q.isSolved ? 'ok' : 'warn'}">${q.isSolved ? '�ѽ��' : '�����'}</span></div><div class="copy">${esc((q.content || '').slice(0, 150))}${(q.content || '').length > 150 ? '...' : ''}</div></div>`;
+    }
 
-function renderCourses(courses) {
-  const el = document.getElementById('courses-list');
-  el.innerHTML = courses.length ? courses.map(c => `
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">${esc(c.name)}</div>
-          <div class="card-meta">
-            <span>📖 ${esc(c.major)}</span>
-            <span>🗓 ${esc(c.semester)}</span>
-            <span>👨‍🏫 ${esc(c.teacher?.username || 'Unknown')}</span>
-          </div>
-        </div>
-        <button class="btn btn-outline btn-sm" onclick="viewCourseQuestions(${c.id})">查看问题</button>
-      </div>
-      ${c.description ? `<div class="card-body" style="margin-top:8px">${esc(c.description)}</div>` : ''}
-    </div>
-  `).join('') : emptyState('未找到课程');
-}
+    function renderCourse(c) {
+        return `<div class="card"><div class="item"><div><h3>${esc(c.name)}</h3><div class="meta"><span>רҵ��${esc(c.major || '-')}</span><span>ѧ�ڣ�${esc(c.semester || '-')}</span><span>��ʦ��${esc(c.teacher?.username || '-')}</span></div></div><button class="btn outline" onclick="viewCourseQuestions(${c.id})">�鿴����</button></div><div class="copy">${esc(c.description || '���޿γ̼�顣')}</div></div>`;
+    }
 
-function viewCourseQuestions(courseId) {
-  showPage('questions');
-  loadQuestionsByCourse(courseId);
-}
+    async function loadNotificationSummary() {
+        const data = await api('GET', '/notifications/summary');
+        if (data && typeof data === 'object') box('notify-count').textContent = data.unreadCount ?? 0;
+    }
 
-async function loadQuestionsByCourse(courseId) {
-  const questions = await api('GET', `/questions/course/${courseId}`) || [];
-  allQuestions = questions;
-  renderQuestions(questions);
-}
+    async function loadDashboard() {
+        const [coursesData, questionsData] = await Promise.all([api('GET', '/courses'), api('GET', '/questions')]);
+        const courses = arr(coursesData);
+        const questions = arr(questionsData);
+        const solved = questions.filter(item => item.isSolved).length;
+        box('s-course').textContent = courses.length;
+        box('s-question').textContent = questions.length;
+        box('s-solved').textContent = solved;
+        box('s-unsolved').textContent = questions.length - solved;
+        box('recent').innerHTML = questions.length ? questions.slice(0, 5).map(renderQuestion).join('') : empty('�����û���µ������¼��');
+    }
 
-function openCreateCourse() { openModal('modal-course'); }
+    async function loadCourses() {
+        allCourses = arr(await api('GET', '/courses'));
+        renderCourses(allCourses);
+    }
 
-async function createCourse() {
-  const name = document.getElementById('course-name').value.trim();
-  const major = document.getElementById('course-major').value.trim();
-  const semester = document.getElementById('course-semester').value.trim();
-  const description = document.getElementById('course-desc').value.trim();
-  const msg = document.getElementById('course-msg');
-  if (!name || !major || !semester) { showMsg(msg, '课程名称、专业和学期必填', 'error'); return; }
+    function renderCourses(courses) {
+        box('course-list').innerHTML = arr(courses).length ? arr(courses).map(renderCourse).join('') : empty('��ǰû�п�չʾ�Ŀγ̡�');
+    }
 
-  const body = { name, major, semester, description, teacher: { id: currentUser.id } };
-  const result = await api('POST', '/courses', body);
-  if (typeof result === 'string' && result.includes('successfully')) {
-    showMsg(msg, result, 'success');
-    setTimeout(() => { closeModal('modal-course'); loadCourses(); }, 1000);
-  } else {
-    showMsg(msg, result || '创建课程失败', 'error');
-  }
-}
+    function filterCourses() {
+        const keyword = box('course-key').value.trim().toLowerCase();
+        renderCourses(allCourses.filter(c => (c.name || '').toLowerCase().includes(keyword) || (c.major || '').toLowerCase().includes(keyword) || (c.semester || '').toLowerCase().includes(keyword)));
+    }
 
-// ── QUESTIONS ────────────────────────────────────────────
-async function loadQuestions() {
-  allQuestions = await api('GET','/questions') || [];
-  renderQuestions(allQuestions);
-}
+    function viewCourseQuestions(id) {
+        detailReturnPage = 'courses';
+        showPage('questions');
+        loadQuestionsByCourse(id);
+    }
 
-function filterQuestions() {
-  const kw = document.getElementById('question-search').value.toLowerCase();
-  const status = document.getElementById('question-filter').value;
-  let filtered = allQuestions.filter(q =>
-    q.title.toLowerCase().includes(kw) || (q.content || '').toLowerCase().includes(kw)
-  );
-  if (status !== '') filtered = filtered.filter(q => String(q.isSolved) === status);
-  renderQuestions(filtered);
-}
+    async function loadQuestions() {
+        allQuestions = arr(await api('GET', '/questions'));
+        renderQuestions(allQuestions);
+    }
 
-function renderQuestions(questions) {
-  const el = document.getElementById('questions-list');
-  el.innerHTML = questions.length ? questions.map(renderQuestionCard).join('') : emptyState('未找到问题');
-}
+    async function loadQuestionsByCourse(id) {
+        allQuestions = arr(await api('GET', `/questions/course/${id}`));
+        renderQuestions(allQuestions);
+    }
 
-function renderQuestionCard(q) {
-  return `
-    <div class="card card-click" onclick="viewQuestion(${q.id})">
-      <div class="card-header">
-        <div style="flex:1">
-          <div class="card-title">${esc(q.title)}</div>
-          <div class="card-meta">
-            <span>👤 ${esc(q.student?.username || 'Unknown')}</span>
-            <span>📚 ${esc(q.course?.name || 'Unknown')}</span>
-            <span>🕐 ${formatDate(q.createTime)}</span>
-          </div>
-        </div>
-        <span class="badge ${q.isSolved ? 'badge-solved' : 'badge-unsolved'}">${q.isSolved ? '✓ 已解决' : '未解决'}</span>
-      </div>
-      <div class="card-body" style="margin-top:6px">${esc(truncate(q.content, 120))}</div>
-    </div>
-  `;
-}
+    function renderQuestions(questions) {
+        box('q-list').innerHTML = arr(questions).length ? arr(questions).map(renderQuestion).join('') : empty('��ǰû�з���ɸѡ���������⡣');
+    }
 
-async function viewQuestion(id) {
-  currentQuestionId = id;
-  showPage('question-detail');
-  const q = await api('GET', `/questions/${id}`);
-  if (!q) return;
+    function filterQuestions() {
+        const keyword = box('q-key').value.trim().toLowerCase();
+        const state = box('q-state').value;
+        let questions = allQuestions.filter(q => (q.title || '').toLowerCase().includes(keyword) || (q.content || '').toLowerCase().includes(keyword));
+        if (state !== '') questions = questions.filter(q => String(q.isSolved) === state);
+        renderQuestions(questions);
+    }
 
-  const answers = await api('GET', `/answers/question/${id}`) || [];
-  const canSolve = currentUser.role === 'teacher' || (currentUser.role === 'student' && q.student?.id === currentUser.id);
+    async function loadMyQuestions() {
+        const questions = arr(await api('GET', `/questions/student/${user.id}`));
+        box('mine-list').innerHTML = questions.length ? questions.map(renderQuestion).join('') : empty('�㻹û�з��������⡣');
+    }
 
-  document.getElementById('question-detail-content').innerHTML = `
-    <div class="card" style="margin-bottom:0">
-      <div class="card-header">
-        <div style="flex:1">
-          <div class="card-title" style="font-size:1.2rem">${esc(q.title)}</div>
-          <div class="card-meta">
-            <span>👤 ${esc(q.student?.username || 'Unknown')}</span>
-            <span>📚 ${esc(q.course?.name || 'Unknown')}</span>
-            <span>🕐 ${formatDate(q.createTime)}</span>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <span class="badge ${q.isSolved ? 'badge-solved':'badge-unsolved'}">${q.isSolved ? '✓ 已解决':'未解决'}</span>
-          ${canSolve && !q.isSolved ? `<button class="btn btn-teal btn-sm" onclick="markSolved(${q.id})">标记为已解决</button>` : ''}
-        </div>
-      </div>
-      <div class="card-body" style="margin-top:12px">${esc(q.content)}</div>
-      ${q.aiAnswer ? `
-        <div class="ai-box">
-          <div class="ai-box-header"><span class="ai-icon">🤖</span><span class="ai-label">AI 助手回答</span></div>
-          <div class="ai-content">${esc(q.aiAnswer)}</div>
-        </div>
-      ` : `
-        <div style="margin-top:12px">
-          <button class="btn btn-outline btn-sm" onclick="regenerateAI(${q.id})">🤖 生成AI回答</button>
-        </div>
-      `}
-    </div>
-  `;
+    async function loadRoleQuestions() {
+        if (user.role === 'student') return loadMyQuestions();
+        const questions = arr(await api('GET', '/questions'));
+        box('mine-list').innerHTML = questions.length ? questions.map(renderQuestion).join('') : empty(user.role === 'teacher' ? '�㸺��Ŀγ��ﻹû��ѧ�����ʡ�' : '��ǰ��û���������ݡ�');
+    }
 
-  const answersEl = document.getElementById('answers-list');
-  if (answers.length === 0) {
-    answersEl.innerHTML = emptyState('暂无回答。成为第一个回答者！');
-  } else {
-    answersEl.innerHTML = answers.map(a => `
-      <div class="answer-card ${a.isAccepted ? 'accepted' : ''}">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start">
-          <div>
-            <strong>${esc(a.author?.username || 'Unknown')}</strong>
-            <span style="color:var(--muted);font-size:12px;margin-left:10px">${formatDate(a.createTime)}</span>
-            ${a.isAccepted ? '<span class="badge badge-accepted" style="margin-left:8px">✓ 最佳回答</span>' : ''}
-          </div>
-          ${canSolve && !a.isAccepted ? `<button class="btn btn-teal btn-sm" onclick="acceptAnswer(${a.id})">采纳</button>` : ''}
-        </div>
-        <div style="margin-top:10px;font-size:14px">${esc(a.content)}</div>
-      </div>
-    `).join('');
-  }
-}
+    function renderCommentItem(comment, answerId, depth = 0) {
+        return `
+            <div class="comment-item ${depth > 0 ? 'reply' : ''}">
+                <div class="comment-head">
+                    <div>
+                        <span class="comment-author">${esc(comment.authorName || 'δ֪�û�')}</span>
+                        <span class="comment-role">${esc(roleMap[comment.authorRole] || comment.authorRole || '�û�')}</span>
+                    </div>
+                    <div class="meta"><span>${fmt(comment.createTime)}</span><span>${comment.likeCount || 0} ��</span></div>
+                </div>
+                <div class="copy" style="margin-top:8px">${esc(comment.content || '')}</div>
+                <div class="comment-actions">
+                    <button class="comment-btn ${comment.likedByCurrentUser ? 'liked' : ''}" onclick="toggleCommentLike(${comment.id})">${comment.likedByCurrentUser ? '�ѵ���' : '����'}</button>
+                    <button class="comment-btn" onclick="openReplyBox(${comment.id}, ${answerId}, '${esc(comment.authorName || 'ͬѧ')}')">�ظ�</button>
+                </div>
+                <div id="reply-box-${comment.id}" class="reply-box"></div>
+                ${comment.replies?.length ? `<div class="comment-list" style="margin-top:10px">${comment.replies.map(item => renderCommentItem(item, answerId, depth + 1)).join('')}</div>` : ''}
+            </div>
+        `;
+    }
 
-async function markSolved(questionId) {
-  const result = await api('PUT', `/questions/${questionId}/solve?operatorId=${currentUser.id}`);
-  viewQuestion(questionId);
-}
+    function renderCommentBoard(answerId, comments) {
+        return `
+            <div class="comment-board">
+                <div class="comment-title">���ۻ���</div>
+                <textarea id="comment-input-${answerId}" rows="3" placeholder="д��������ۣ���������ش𲹳俴����"></textarea>
+                <div class="actions" style="margin-top:10px">
+                    <button class="btn outline" onclick="submitComment(${answerId})">��������</button>
+                </div>
+                <div id="comment-msg-${answerId}" class="msg"></div>
+                <div class="comment-list" style="margin-top:12px">${comments.length ? comments.map(item => renderCommentItem(item, answerId)).join('') : '<div class="empty">�����ش��»�û�����ۣ���ӭ������һ����</div>'}</div>
+            </div>
+        `;
+    }
 
-async function acceptAnswer(answerId) {
-  await api('PUT', `/answers/${answerId}/accept`);
-  viewQuestion(currentQuestionId);
-}
+    function renderAnswerCard(answer, comments, canSolve) {
+        return `
+            <div class="card answer ${answer.isAccepted ? 'accepted' : ''}">
+                <div class="item">
+                    <div>
+                        <h3 style="font-size:18px;margin:0">${esc(answer.author?.username || 'δ֪�û�')}</h3>
+                        <div class="meta"><span>${fmt(answer.createTime)}</span>${answer.isAccepted ? '<span class="badge ok">�Ѳ���</span>' : ''}</div>
+                    </div>
+                    ${canSolve && !answer.isAccepted ? `<button class="btn teal" onclick="acceptAnswer(${answer.id})">���ɻش�</button>` : ''}
+                </div>
+                <div class="copy">${esc(answer.content || '')}</div>
+                ${renderCommentBoard(answer.id, comments)}
+            </div>
+        `;
+    }
 
-async function regenerateAI(questionId) {
-  const el = document.querySelector('.ai-box, [onclick^="regenerateAI"]');
-  if (el) el.innerHTML = '<div class="spinner" style="border-color:rgba(0,0,0,0.2);border-top-color:var(--teal)"></div> 正在生成AI回答…';
-  await api('PUT', `/questions/${questionId}/ai-answer`);
-  viewQuestion(questionId);
-}
+    async function viewQuestion(id) {
+        currentQuestionId = id;
+        document.querySelectorAll('.page').forEach(node => node.classList.remove('active'));
+        box('p-detail').classList.add('active');
 
-// ── MY QUESTIONS ─────────────────────────────────────────
-async function loadMyQuestions() {
-  const questions = await api('GET', `/questions/student/${currentUser.id}`) || [];
-  const el = document.getElementById('my-questions-list');
-  el.innerHTML = questions.length ? questions.map(renderQuestionCard).join('') : emptyState('您还没有发布任何问题。');
-}
+        const question = await api('GET', `/questions/${id}`);
+        if (!question) return;
+        const answers = arr(await api('GET', `/answers/question/${id}`));
+        const commentsEntries = await Promise.all(answers.map(async answer => [answer.id, arr(await api('GET', `/answers/${answer.id}/comments`))]));
+        const commentsByAnswer = Object.fromEntries(commentsEntries);
 
-// ── ASK QUESTION ─────────────────────────────────────────
-function openAskQuestion() {
-  const sel = document.getElementById('ask-course');
-  sel.innerHTML = allCourses.map(c => `<option value="${c.id}">${esc(c.name)} — ${esc(c.semester)}</option>`).join('');
-  openModal('modal-ask');
-}
+        const canSolve = user.role === 'admin'
+            || (user.role === 'teacher' && question.course?.teacher?.id === user.id)
+            || (user.role === 'student' && question.student?.id === user.id);
+        const canAi = user.role === 'admin' || user.role === 'teacher' || question.student?.id === user.id;
 
-async function submitQuestion() {
-  const title = document.getElementById('ask-title').value.trim();
-  const content = document.getElementById('ask-content').value.trim();
-  const courseId = document.getElementById('ask-course').value;
-  const msg = document.getElementById('ask-msg');
-  if (!title || !content) { showMsg(msg, '标题和详情必填', 'error'); return; }
+        box('detail').innerHTML = `<div class="panel"><div class="item"><div><h2 class="title" style="font-size:30px">${esc(question.title)}</h2><div class="meta"><span>�����ˣ�${esc(question.student?.username || 'δ֪')}</span><span>�γ̣�${esc(question.course?.name || 'δָ��')}</span><span>${fmt(question.createTime)}</span></div></div><span class="badge ${question.isSolved ? 'ok' : 'warn'}">${question.isSolved ? '�ѽ��' : '�����'}</span></div><div class="copy">${esc(question.content || '')}</div>${question.aiAnswer ? `<div class="ai"><strong>AI �����ش�</strong><div class="copy" style="margin-top:0">${esc(question.aiAnswer)}</div></div>` : ''}<div class="actions" style="margin-top:16px">${canAi ? `<button class="btn outline" onclick="regenerateAI(${question.id})">${question.aiAnswer ? '�������� AI �ش�' : '���� AI �����ش�'}</button>` : ''}${canSolve && !question.isSolved ? `<button class="btn teal" onclick="markSolved(${question.id})">���Ϊ�ѽ��</button>` : ''}</div></div>`;
 
-  const body = { title, content, course: { id: parseInt(courseId) }, student: { id: currentUser.id } };
-  const result = await api('POST', '/questions', body);
-  if (typeof result === 'string' && result.includes('successfully')) {
-    showMsg(msg, '问题已提交！AI回答正在生成中…', 'success');
-    document.getElementById('ask-title').value = '';
-    document.getElementById('ask-content').value = '';
-    setTimeout(() => { closeModal('modal-ask'); loadQuestions(); loadDashboard(); }, 1500);
-  } else {
-    showMsg(msg, result || '提交问题失败', 'error');
-  }
-}
+        box('answer-composer').innerHTML = `<div class="composer"><label for="inline-answer-content">ֱ�ӻش��������</label><textarea id="inline-answer-content" rows="5" placeholder="д����Ľ�𡢲�����顣"></textarea><div class="actions"><button class="btn gold" onclick="submitInlineAnswer()">�ύ�ش�</button><button class="btn outline" onclick="box('inline-answer-content').value=''">���</button></div><div id="inline-answer-msg" class="msg"></div></div>`;
+        box('answer-list').innerHTML = answers.length ? answers.map(answer => renderAnswerCard(answer, commentsByAnswer[answer.id] || [], canSolve)).join('') : empty('���ﻹû�лش𣬻�ӭ�����һ����');
+    }
 
-// ── POST ANSWER ──────────────────────────────────────────
-function openPostAnswer() { openModal('modal-answer'); }
+    function refreshDetail() {
+        if (currentQuestionId) viewQuestion(currentQuestionId);
+    }
 
-async function submitAnswer() {
-  const content = document.getElementById('answer-content').value.trim();
-  const msg = document.getElementById('answer-msg');
-  if (!content) { showMsg(msg, '回答内容不能为空', 'error'); return; }
+    async function createCourse() {
+        const name = box('course-name').value.trim();
+        const major = box('course-major').value.trim();
+        const semester = box('course-semester').value.trim();
+        const description = box('course-desc').value.trim();
+        if (!name || !major || !semester) return msg('course-msg', '�γ����ơ�רҵ��ѧ�ڶ���Ҫ��д��', 'error');
+        const result = await api('POST', '/courses', { name, major, semester, description, teacher: { id: user.id } });
+        if (typeof result === 'string' && result.toLowerCase().includes('successfully')) {
+            msg('course-msg', '�γ̴����ɹ���', 'success');
+            setTimeout(() => {
+                closeModal('m-course');
+                ['course-name', 'course-major', 'course-semester', 'course-desc'].forEach(id => box(id).value = '');
+                loadCourses();
+                loadDashboard();
+            }, 700);
+            return;
+        }
+        msg('course-msg', result || '�γ̴���ʧ�ܡ�', 'error');
+    }
 
-  const body = { content, question: { id: currentQuestionId }, author: { id: currentUser.id } };
-  const result = await api('POST', '/answers', body);
-  if (result && result.id) {
-    document.getElementById('answer-content').value = '';
-    closeModal('modal-answer');
-    viewQuestion(currentQuestionId);
-  } else {
-    showMsg(msg, '发布回答失败', 'error');
-  }
-}
+    function openAsk() {
+        if (allCourses.length === 0) {
+            box('ask-course').innerHTML = '<option value="">���޿�ѡ�γ�</option>';
+            msg('ask-msg', '��ǰû�п�ѡ�γ̣�����ˢ�¿γ��б���', 'error');
+            return openModal('m-ask');
+        }
+        box('ask-course').innerHTML = allCourses.map(c => `<option value="${c.id}">${esc(c.name)} �� ${esc(c.semester || '')}</option>`).join('');
+        msg('ask-msg', '');
+        openModal('m-ask');
+    }
 
-// ── UTILS ────────────────────────────────────────────────
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function esc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function truncate(s, n) { if (!s) return ''; return s.length > n ? s.slice(0,n) + '…' : s; }
-function formatDate(dt) { if (!dt) return ''; try { return new Date(dt).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}); } catch { return dt; } }
-function emptyState(text) { return `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-text">${text}</div></div>`; }
-function showMsg(el, text, type) {
-  el.textContent = text;
-  el.className = `msg ${type}`;
-}
-// Close modals on overlay click
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
-});
+    async function submitQuestion() {
+        const title = box('ask-title').value.trim();
+        const content = box('ask-content').value.trim();
+        const courseId = Number(box('ask-course').value);
+        if (!title || !content) return msg('ask-msg', '�������ϸ˵������Ҫ��д��', 'error');
+        const result = await api('POST', '/questions', { title, content, course: { id: courseId }, student: { id: user.id } });
+        if (typeof result === 'string' && result.toLowerCase().includes('successfully')) {
+            msg('ask-msg', '�������ύ��', 'success');
+            box('ask-title').value = '';
+            box('ask-content').value = '';
+            setTimeout(() => {
+                closeModal('m-ask');
+                refreshAll();
+                showPage('mine');
+            }, 700);
+            return;
+        }
+        msg('ask-msg', result || '�����ύʧ�ܡ�', 'error');
+    }
+
+    async function submitAnswer() {
+        const content = box('answer-content').value.trim();
+        if (!content) return msg('answer-msg', '�ش����ݲ���Ϊ�ա�', 'error');
+        const result = await api('POST', '/answers', { content, question: { id: currentQuestionId }, author: { id: user.id } });
+        if (result && result.id) {
+            box('answer-content').value = '';
+            msg('answer-msg', '');
+            closeModal('m-answer');
+            viewQuestion(currentQuestionId);
+            loadNotificationSummary();
+            return;
+        }
+        msg('answer-msg', typeof result === 'string' ? result : '�����ش�ʧ�ܡ�', 'error');
+    }
+
+    async function submitInlineAnswer() {
+        const content = box('inline-answer-content')?.value.trim();
+        if (!content) return msg('inline-answer-msg', '�ش����ݲ���Ϊ�ա�', 'error');
+        const result = await api('POST', '/answers', { content, question: { id: currentQuestionId }, author: { id: user.id } });
+        if (result && result.id) {
+            box('inline-answer-content').value = '';
+            msg('inline-answer-msg', '�ش����ύ��', 'success');
+            viewQuestion(currentQuestionId);
+            loadNotificationSummary();
+            return;
+        }
+        msg('inline-answer-msg', typeof result === 'string' ? result : '�����ش�ʧ�ܡ�', 'error');
+    }
+
+    async function submitComment(answerId, parentId = null) {
+        const inputId = parentId ? `reply-input-${parentId}` : `comment-input-${answerId}`;
+        const msgId = parentId ? `reply-msg-${parentId}` : `comment-msg-${answerId}`;
+        const content = box(inputId)?.value.trim();
+        if (!content) return msg(msgId, '�������ݲ���Ϊ�ա�', 'error');
+        const result = await api('POST', `/answers/${answerId}/comments`, { content, parentId });
+        if (result && result.id) {
+            box(inputId).value = '';
+            msg(msgId, parentId ? '�ظ��ѷ��͡�' : '�����ѷ�����', 'success');
+            if (parentId) box(`reply-box-${parentId}`).innerHTML = '';
+            viewQuestion(currentQuestionId);
+            loadNotificationSummary();
+            return;
+        }
+        msg(msgId, typeof result === 'string' ? result : '���۷���ʧ�ܡ�', 'error');
+    }
+
+    function openReplyBox(commentId, answerId, authorName) {
+        const target = box(`reply-box-${commentId}`);
+        if (!target) return;
+        if (target.innerHTML.trim()) {
+            target.innerHTML = '';
+            return;
+        }
+        target.innerHTML = `<textarea id="reply-input-${commentId}" rows="3" placeholder="�ظ� ${authorName} ..."></textarea><div class="actions" style="margin-top:8px"><button class="btn outline" onclick="submitComment(${answerId}, ${commentId})">���ͻظ�</button><button class="btn outline" onclick="box('reply-box-${commentId}').innerHTML=''">ȡ��</button></div><div id="reply-msg-${commentId}" class="msg"></div>`;
+    }
+
+    async function toggleCommentLike(commentId) {
+        await api('PUT', `/answers/comments/${commentId}/like`);
+        viewQuestion(currentQuestionId);
+    }
+
+    async function markSolved(id) {
+        await api('PUT', `/questions/${id}/solve`);
+        await Promise.all([viewQuestion(id), loadDashboard(), loadQuestions(), loadRoleQuestions()]);
+    }
+
+    async function acceptAnswer(id) {
+        await api('PUT', `/answers/${id}/accept`);
+        await Promise.all([viewQuestion(currentQuestionId), loadDashboard(), loadQuestions(), loadRoleQuestions()]);
+    }
+
+    async function regenerateAI(id) {
+        await api('PUT', `/questions/${id}/ai-answer`);
+        viewQuestion(id);
+    }
+
+    function openModal(id) {
+        box(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+        box(id).classList.remove('open');
+    }
+
+    document.querySelectorAll('.modal-mask').forEach(mask => {
+        mask.addEventListener('click', event => {
+            if (event.target === mask) mask.classList.remove('open');
+        });
+    });
+
+    async function refreshAll() {
+        await Promise.allSettled([loadNotificationSummary(), loadDashboard(), loadCourses(), loadQuestions(), loadRoleQuestions()]);
+    }
 </script>
 </body>
 </html>
+

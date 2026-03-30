@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+
+jwt:
+  secret: test-secret-key-for-demo-project-please-change
+  expiration: 86400000
+
+ai:
+  api:
+    key: your_anthropic_api_key_here
+    url: https://api.anthropic.com/v1/messages
+  model: claude-sonnet-4-20250514

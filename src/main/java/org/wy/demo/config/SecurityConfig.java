@@ -1,6 +1,5 @@
 package org.wy.demo.config;
 
-import org.wy.demo.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +14,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.wy.demo.security.JwtAuthFilter;
 
 import java.util.Arrays;
 
@@ -41,8 +41,9 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers("/api/user/register", "/api/user/login").permitAll()
                 .antMatchers("/favicon.ico").permitAll()
-                .antMatchers(HttpMethod.GET, "/", "/index.html", "/*.html", "/*.js", "/*.css").permitAll()
-                .anyRequest().permitAll()  // 临时放行所有请求，功能调通后再加权限
+                .antMatchers(HttpMethod.GET, "/", "/index.html", "/ask.html", "/*.html", "/*.js", "/*.css").permitAll()
+                .antMatchers("/api/**").authenticated()
+                .anyRequest().permitAll()
                 .and()
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

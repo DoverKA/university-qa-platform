@@ -1,0 +1,41 @@
+services:
+  app:
+    build: .
+    container_name: university-qa-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/university_qa?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: university_qa
+      SPRING_DATASOURCE_PASSWORD: change_me_db_password
+      JWT_SECRET: change-this-to-a-long-random-secret-key
+      AI_API_KEY: your_deepseek_api_key_here
+      AI_API_URL: https://api.deepseek.com/chat/completions
+      AI_MODEL: deepseek-chat
+      SERVER_PORT: 8080
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.4
+    container_name: university-qa-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: university_qa
+      MYSQL_USER: university_qa
+      MYSQL_PASSWORD: change_me_db_password
+      MYSQL_ROOT_PASSWORD: change_me_root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pchange_me_root_password"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:

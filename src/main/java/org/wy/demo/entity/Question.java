@@ -1,10 +1,16 @@
 package org.wy.demo.entity;
 
-import lombok.Data;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "question")
 public class Question {
@@ -12,42 +18,98 @@ public class Question {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    // 问题标题（必填，高校场景：简洁描述问题）
     @Column(nullable = false, length = 200)
     private String title;
 
-    // 问题详情（必填，详细描述问题）
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    // 关联课程（必填，提问必须归属某门课程）
     @ManyToOne
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
-    // 提问学生（必填）
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     private User student;
 
-    // 是否已解决（默认false）
     @Column(name = "is_solved")
     private Boolean isSolved = false;
 
-    // 创建时间（自动填充）
     @Column(name = "create_time")
     private LocalDateTime createTime;
 
-    // AI回答内容（可选，后续对接AI用）
     @Column(name = "ai_answer", columnDefinition = "TEXT")
     private String aiAnswer;
 
-    // 保存前自动填充创建时间
     @PrePersist
     public void prePersist() {
         this.createTime = LocalDateTime.now();
         if (this.isSolved == null) {
-            this.isSolved = false; // 默认未解决
+            this.isSolved = false;
         }
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public User getStudent() {
+        return student;
+    }
+
+    public void setStudent(User student) {
+        this.student = student;
+    }
+
+    public Boolean getIsSolved() {
+        return isSolved;
+    }
+
+    public void setIsSolved(Boolean isSolved) {
+        this.isSolved = isSolved;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public String getAiAnswer() {
+        return aiAnswer;
+    }
+
+    public void setAiAnswer(String aiAnswer) {
+        this.aiAnswer = aiAnswer;
     }
 }

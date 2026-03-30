@@ -1,0 +1,6 @@
+.git
+.idea
+target
+docx_work
+*.docx
+*.log

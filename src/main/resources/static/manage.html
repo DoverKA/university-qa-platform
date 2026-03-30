@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniAsk 管理中心</title>
+  <style>
+    :root{--bg:#f6efe5;--card:rgba(255,255,255,.84);--ink:#17313a;--muted:#69706d;--line:rgba(23,49,58,.12);--teal:#0f766e;--gold:#b88628;--rose:#b85b50}
+    *{box-sizing:border-box}body{margin:0;font-family:"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:radial-gradient(circle at top left,rgba(15,118,110,.12),transparent 22%),linear-gradient(180deg,#fbf7f1,var(--bg));color:var(--ink)}
+    button,input,select,textarea{font:inherit}a{color:inherit;text-decoration:none}.shell{max-width:1340px;margin:0 auto;padding:22px 16px 30px}.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:18px}.title{font-size:36px;letter-spacing:-.04em;margin:0}.muted{color:var(--muted);line-height:1.8}
+    .actions,.toolbar,.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.layout{display:grid;grid-template-columns:230px 1fr;gap:18px}.side,.panel,.stat{background:var(--card);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:24px;box-shadow:0 18px 60px rgba(18,35,42,.11)}.side{padding:14px;height:fit-content;position:sticky;top:14px}.nav{width:100%;text-align:left;border:0;background:transparent;padding:13px 14px;border-radius:16px;cursor:pointer;margin-bottom:6px}.nav.active,.nav:hover{background:rgba(15,118,110,.1);color:var(--teal)}
+    .panel{padding:20px}.panel.hidden{display:none}.panel h2{margin:0 0 8px;font-size:24px}.head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}.stat{padding:16px}.stat strong{display:block;font-size:30px;letter-spacing:-.04em}
+    input,select,textarea{width:100%;padding:11px 12px;border-radius:14px;border:1px solid var(--line);background:#fff}textarea{min-height:90px;resize:vertical}.btn{border:0;border-radius:999px;padding:10px 16px;cursor:pointer}.btn.primary{background:var(--teal);color:#fff}.btn.gold{background:var(--gold);color:#fff}.btn.outline{background:#fff;border:1px solid var(--line)}.btn.danger{background:var(--rose);color:#fff}
+    .list{display:grid;gap:12px}.item{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fffefb}.item-top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}.item-title{font-size:18px;font-weight:700}.meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--muted)}.empty{padding:26px 16px;text-align:center;color:var(--muted);border:1px dashed rgba(23,49,58,.18);border-radius:18px}
+    .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}.badge.teal{background:rgba(15,118,110,.12);color:var(--teal)}.badge.gold{background:rgba(184,134,40,.14);color:#94660e}.badge.rose{background:rgba(184,91,80,.12);color:var(--rose)}
+    .note{display:none;padding:12px 14px;border-radius:16px;background:rgba(15,118,110,.08);color:var(--teal);margin-bottom:14px}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}.side{position:static}.grid2{grid-template-columns:1fr}}@media (max-width:720px){.shell{padding:14px 10px 24px}.panel,.side,.item{padding:14px}.title{font-size:28px}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="top">
+      <div><h1 class="title">UniAsk 管理中心</h1><div class="muted">把问题检索、通知、课程维护、回答管理、统计看板和系统操作收拢到一个工作台里。</div></div>
+      <div class="actions"><a class="btn outline" href="/index.html">返回首页</a><button class="btn outline" id="refresh-all">刷新全部数据</button></div>
+    </div>
+    <div class="layout">
+      <aside class="side">
+        <button class="nav active" data-panel="search-panel">问题检索</button>
+        <button class="nav" data-panel="notification-panel">消息通知</button>
+        <button class="nav" data-panel="course-panel">课程管理</button>
+        <button class="nav" data-panel="question-panel">问题管理</button>
+        <button class="nav" data-panel="answer-panel">回答管理</button>
+        <button class="nav" data-panel="stats-panel">统计看板</button>
+        <button class="nav" data-panel="system-panel">系统管理</button>
+      </aside>
+      <main class="list">
+        <section class="panel" id="search-panel">
+          <div class="head"><div><h2>问题检索</h2><div class="muted">输入关键词后快速检索课程问题，适合教师和学生做回查。</div></div></div>
+          <div class="filters"><input id="search-keyword" placeholder="输入标题或内容关键词"><button class="btn gold" id="search-btn">检索问题</button></div>
+          <div class="note" id="search-note"></div>
+          <div class="list" id="search-results" style="margin-top:14px"></div>
+        </section>
+        <section class="panel hidden" id="notification-panel">
+          <div class="head"><div><h2>消息通知</h2><div class="muted">查看系统通知，支持单条已读和全部已读。</div></div><div class="toolbar"><button class="btn outline" id="mark-all-read-btn">全部标为已读</button></div></div>
+          <div class="list" id="notification-list"></div>
+        </section>
+        <section class="panel hidden" id="course-panel">
+          <div class="head"><div><h2>课程管理</h2><div class="muted">支持创建、筛选、编辑和删除课程。</div></div></div>
+          <div class="grid2" style="margin-bottom:12px"><input id="course-keyword" placeholder="按课程名、专业或学期筛选"><button class="btn outline" id="course-search-btn">刷新课程列表</button></div>
+          <div class="grid2" style="margin-bottom:12px"><input id="course-name" placeholder="课程名称"><input id="course-major" placeholder="所属专业"><input id="course-semester" placeholder="学期"><input id="course-teacher-id" placeholder="教师 ID（管理员可指定）"></div>
+          <textarea id="course-desc" placeholder="课程简介"></textarea>
+          <div class="toolbar" style="margin-top:12px"><button class="btn primary" id="create-course-btn">保存课程</button></div>
+          <div class="list" id="course-list" style="margin-top:14px"></div>
+        </section>
+        <section class="panel hidden" id="question-panel">
+          <div class="head"><div><h2>问题管理</h2><div class="muted">按照关键词、课程和状态筛选问题，并直接更新或删除。</div></div></div>
+          <div class="grid2" style="margin-bottom:12px"><input id="question-keyword" placeholder="按标题或内容筛选"><input id="question-course-id" placeholder="课程 ID（可选）"><select id="question-solved"><option value="">全部状态</option><option value="true">已解决</option><option value="false">待解决</option></select><button class="btn outline" id="question-search-btn">刷新问题列表</button></div>
+          <div class="list" id="question-list"></div>
+        </section>
+        <section class="panel hidden" id="answer-panel">
+          <div class="head"><div><h2>回答管理</h2><div class="muted">按照关键词或问题 ID 检索回答，并支持编辑或删除。</div></div></div>
+          <div class="grid2" style="margin-bottom:12px"><input id="answer-keyword" placeholder="按回答内容筛选"><input id="answer-question-id" placeholder="问题 ID（可选）"></div>
+          <button class="btn outline" id="answer-search-btn">刷新回答列表</button>
+          <div class="list" id="answer-list" style="margin-top:14px"></div>
+        </section>
+        <section class="panel hidden" id="stats-panel">
+          <div class="head"><div><h2>统计看板</h2><div class="muted">汇总用户、课程、问题、回答与通知数据。</div></div><button class="btn outline" id="stats-refresh-btn">刷新统计</button></div>
+          <div class="stats" id="stats-grid"></div>
+          <div class="panel" style="margin-top:16px;box-shadow:none"><h2 style="font-size:20px">课程问题分布</h2><div class="list" id="distribution-list" style="margin-top:12px"></div></div>
+        </section>
+        <section class="panel hidden" id="system-panel">
+          <div class="head"><div><h2>系统管理</h2><div class="muted">管理员可维护用户角色并执行 SQL 同步。</div></div><div class="toolbar"><button class="btn gold" id="sql-sync-btn">执行 SQL 同步</button><button class="btn outline" id="user-refresh-btn">刷新用户列表</button></div></div>
+          <div class="list" id="user-list"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script>
+    const API=`${window.location.origin}/api`,token=localStorage.getItem('uniask_token'),currentUser=JSON.parse(localStorage.getItem('uniask_user')||'null');if(!token||!currentUser){alert('请先登录后再进入管理中心。');window.location.href='/index.html'}
+    document.querySelectorAll('.nav').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.add('hidden'));b.classList.add('active');document.getElementById(b.dataset.panel).classList.remove('hidden')}));
+    if(currentUser.role==='student'){['course-panel','question-panel','answer-panel','stats-panel','system-panel'].forEach(id=>document.querySelector(`[data-panel="${id}"]`)?.style.setProperty('display','none'))}
+    if(currentUser.role!=='admin')document.querySelector('[data-panel="system-panel"]')?.style.setProperty('display','none');
+    const box=id=>document.getElementById(id),esc=v=>v==null?'':String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'","&#39;"),fmt=v=>v?new Date(v).toLocaleString('zh-CN',{hour12:false}):'',renderList=(el,items,render,txt)=>el.innerHTML=items.length?items.map(render).join(''):`<div class="empty">${esc(txt)}</div>`;
+    async function parse(r){const text=await r.text();try{return JSON.parse(text)}catch{return text}}
+    async function request(method,path,body){const opt={method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`}};if(body)opt.body=JSON.stringify(body);const r=await fetch(API+path,opt);const data=await parse(r);if(!r.ok)throw new Error(typeof data==='object'&&data?.message?data.message:(data||'请求失败'));return data}
+    async function loadSearchResults(){const keyword=box('search-keyword').value.trim(),note=box('search-note');if(!keyword){note.textContent='请输入关键词再检索。';note.style.display='block';return}note.style.display='none';const data=await request('GET',`/manage/search/questions?keyword=${encodeURIComponent(keyword)}`);renderList(box('search-results'),data,item=>`<div class="item"><div class="item-title">${esc(item.title)}</div><div class="meta"><span>课程：${esc(item.course?.name||'-')}</span><span>提问人：${esc(item.student?.username||'-')}</span><span>${item.isSolved?'已解决':'待解决'}</span></div><div style="margin-top:10px;line-height:1.8">${esc(item.content||'')}</div></div>`,'没有找到匹配的问题。')}
+    async function loadNotifications(){const data=await request('GET','/notifications');renderList(box('notification-list'),data,item=>`<div class="item"><div class="item-top"><div><div class="item-title">${esc(item.title)}</div><div class="meta"><span>${esc(item.type||'-')}</span><span>${fmt(item.createTime)}</span><span class="badge ${item.isRead?'gold':'teal'}">${item.isRead?'已读':'未读'}</span></div></div>${item.isRead?'':`<button class="btn outline" onclick="markNotificationRead(${item.id})">标为已读</button>`}</div><div style="line-height:1.8">${esc(item.content||'')}</div></div>`,'暂时没有通知。')}
+    async function markNotificationRead(id){await request('PUT',`/notifications/${id}/read`);loadNotifications()}async function markAllRead(){await request('PUT','/notifications/read-all');loadNotifications()}
+    async function loadCourses(){const keyword=box('course-keyword').value.trim(),path=keyword?`/manage/courses?keyword=${encodeURIComponent(keyword)}`:'/manage/courses',data=await request('GET',path);renderList(box('course-list'),data,item=>`<div class="item"><div class="item-top"><div><div class="item-title">${esc(item.name)}</div><div class="meta"><span>专业：${esc(item.major||'-')}</span><span>学期：${esc(item.semester||'-')}</span><span>教师：${esc(item.teacher?.username||'-')}</span></div></div><div class="toolbar"><button class="btn outline" onclick="fillCourseForm(${item.id},'${esc(item.name)}','${esc(item.major)}','${esc(item.semester)}','${esc(item.description||'')}',${item.teacher?.id||'null'})">编辑</button><button class="btn danger" onclick="deleteCourse(${item.id})">删除</button></div></div><div style="line-height:1.8">${esc(item.description||'暂无课程简介。')}</div></div>`,'暂无课程数据。')}
+    function fillCourseForm(id,name,major,semester,description,teacherId){box('create-course-btn').dataset.editId=id;box('course-name').value=name;box('course-major').value=major;box('course-semester').value=semester;box('course-desc').value=description;box('course-teacher-id').value=teacherId||''}
+    async function saveCourse(){const editId=box('create-course-btn').dataset.editId,body={name:box('course-name').value.trim(),major:box('course-major').value.trim(),semester:box('course-semester').value.trim(),description:box('course-desc').value.trim(),teacher:{id:parseInt(box('course-teacher-id').value||currentUser.id,10)}};if(!body.name||!body.major||!body.semester)return alert('课程名称、专业和学期不能为空。');await request(editId?'PUT':'POST',editId?`/manage/courses/${editId}`:'/manage/courses',body);box('create-course-btn').dataset.editId='';['course-name','course-major','course-semester','course-desc','course-teacher-id'].forEach(id=>box(id).value='');loadCourses()}
+    async function deleteCourse(id){if(!confirm('确认删除这个课程吗？'))return;await request('DELETE',`/manage/courses/${id}`);loadCourses()}
+    async function loadQuestions(){const params=new URLSearchParams(),keyword=box('question-keyword').value.trim(),courseId=box('question-course-id').value.trim(),solved=box('question-solved').value;if(keyword)params.set('keyword',keyword);if(courseId)params.set('courseId',courseId);if(solved)params.set('solved',solved);const data=await request('GET',`/manage/questions${params.toString()?`?${params}`:''}`);renderList(box('question-list'),data,item=>`<div class="item"><div class="item-top"><div><div class="item-title">${esc(item.title)}</div><div class="meta"><span>课程：${esc(item.course?.name||'-')}</span><span>提问人：${esc(item.student?.username||'-')}</span><span class="badge ${item.isSolved?'gold':'teal'}">${item.isSolved?'已解决':'待解决'}</span></div></div><div class="toolbar"><button class="btn outline" onclick="toggleQuestionSolved(${item.id},${item.isSolved?'false':'true'})">${item.isSolved?'改为待解决':'标记已解决'}</button><button class="btn danger" onclick="deleteQuestion(${item.id})">删除</button></div></div><div style="line-height:1.8">${esc(item.content||'')}</div></div>`,'暂无问题数据。')}
+    async function toggleQuestionSolved(id,solved){await request('PUT',`/manage/questions/${id}`,{isSolved:solved===true||solved==='true'});loadQuestions()}async function deleteQuestion(id){if(!confirm('确认删除这个问题吗？'))return;await request('DELETE',`/manage/questions/${id}`);loadQuestions()}
+    async function loadAnswers(){const params=new URLSearchParams(),keyword=box('answer-keyword').value.trim(),questionId=box('answer-question-id').value.trim();if(keyword)params.set('keyword',keyword);if(questionId)params.set('questionId',questionId);const data=await request('GET',`/manage/answers${params.toString()?`?${params}`:''}`);renderList(box('answer-list'),data,item=>`<div class="item"><div class="item-top"><div><div class="item-title">回答 #${item.id}</div><div class="meta"><span>作者：${esc(item.author?.username||'-')}</span><span>问题 ID：${item.question?.id||'-'}</span><span>${fmt(item.createTime)}</span>${item.isAccepted?'<span class="badge gold">已采纳</span>':''}</div></div><div class="toolbar"><button class="btn outline" onclick="editAnswer(${item.id},'${esc(item.content||'')}')">编辑</button><button class="btn danger" onclick="deleteAnswer(${item.id})">删除</button></div></div><div style="line-height:1.8">${esc(item.content||'')}</div></div>`,'暂无回答数据。')}
+    async function editAnswer(id,content){const next=prompt('修改回答内容：',content);if(next===null)return;await request('PUT',`/manage/answers/${id}`,{content:next});loadAnswers()}async function deleteAnswer(id){if(!confirm('确认删除这条回答吗？'))return;await request('DELETE',`/manage/answers/${id}`);loadAnswers()}
+    async function loadStats(){const overview=await request('GET','/manage/overview'),distribution=await request('GET','/manage/stats/course-distribution'),keys=[['totalUsers','用户总数'],['studentCount','学生数'],['teacherCount','教师数'],['adminCount','管理员数'],['totalCourses','课程数'],['totalQuestions','问题数'],['solvedQuestions','已解决问题'],['unsolvedQuestions','待解决问题'],['totalAnswers','回答数'],['unreadNotifications','未读通知']];box('stats-grid').innerHTML=keys.map(([k,l])=>`<div class="stat"><strong>${overview[k]??0}</strong><span class="muted">${l}</span></div>`).join('');renderList(box('distribution-list'),Object.entries(distribution||{}),([name,count])=>`<div class="item"><div class="item-top"><div class="item-title">${esc(name)}</div><span class="badge teal">${count} 个问题</span></div></div>`,'暂无课程分布数据。')}
+    async function loadUsers(){if(currentUser.role!=='admin')return;const data=await request('GET','/manage/system/users');renderList(box('user-list'),data,item=>`<div class="item"><div class="item-top"><div><div class="item-title">${esc(item.username)}</div><div class="meta"><span>ID：${item.id}</span><span>邮箱：${esc(item.email||'-')}</span><span class="badge teal">${esc(item.role||'-')}</span></div></div><div class="toolbar"><button class="btn outline" onclick="changeRole(${item.id},'${item.role||'student'}')">改角色</button>${item.id===currentUser.id?'':`<button class="btn danger" onclick="deleteUser(${item.id})">删除</button>`}</div></div></div>`,'暂无用户数据。')}
+    async function changeRole(id,currentRole){const next=prompt('输入新角色：student / teacher / admin',currentRole);if(!next)return;await request('PUT',`/manage/system/users/${id}/role`,{role:next});loadUsers();loadStats()}async function deleteUser(id){if(!confirm('确认删除这个用户吗？'))return;await request('DELETE',`/manage/system/users/${id}`);loadUsers();loadStats()}async function sqlSync(){const result=await request('POST','/manage/system/sql-sync');alert(`同步完成：${JSON.stringify(result)}`)}
+    async function refreshAll(){await Promise.allSettled([loadSearchResults().catch(()=>{}),loadNotifications().catch(()=>{}),currentUser.role==='student'?Promise.resolve():loadCourses().catch(()=>{}),currentUser.role==='student'?Promise.resolve():loadQuestions().catch(()=>{}),currentUser.role==='student'?Promise.resolve():loadAnswers().catch(()=>{}),currentUser.role==='student'?Promise.resolve():loadStats().catch(()=>{}),currentUser.role==='admin'?loadUsers().catch(()=>{}):Promise.resolve()])}
+    box('search-btn').addEventListener('click',loadSearchResults);box('mark-all-read-btn').addEventListener('click',markAllRead);box('course-search-btn').addEventListener('click',loadCourses);box('create-course-btn').addEventListener('click',saveCourse);box('question-search-btn').addEventListener('click',loadQuestions);box('answer-search-btn').addEventListener('click',loadAnswers);box('stats-refresh-btn').addEventListener('click',loadStats);box('user-refresh-btn')?.addEventListener('click',loadUsers);box('sql-sync-btn')?.addEventListener('click',sqlSync);box('refresh-all').addEventListener('click',refreshAll);refreshAll();
+  </script>
+</body>
+</html>

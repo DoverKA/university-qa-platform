@@ -1,26 +1,23 @@
 spring:
   datasource:
-    driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/你的数据库名?useUnicode=true&characterEncoding=utf8&useSSL=false
-    username: root
-    password: 你的数据库密码
+    url: ${DB_URL:jdbc:mysql://localhost:3306/university_qa?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.MySQL5Dialect
+    show-sql: false
 
 jwt:
-  secret: 随便写一个长字符串
-  expiration: 86400000
+  secret: ${JWT_SECRET:change-this-to-a-long-random-secret-key-please-update}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 ai:
   api:
-    key: 你的Anthropic API密钥（没有可以不填）
-    url: https://api.anthropic.com/v1/messages
-  model: claude-sonnet-4-20250514
+    key: ${AI_API_KEY:your_deepseek_api_key_here}
+    url: ${AI_API_URL:https://api.deepseek.com/chat/completions}
+  model: ${AI_MODEL:deepseek-chat}
+  system-prompt: ${AI_SYSTEM_PROMPT:你是一名耐心、准确、适合高校教学场景的助教。请用简洁、清晰、结构化的中文回答，优先帮助学生理解概念、定位问题并给出下一步建议。}
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
